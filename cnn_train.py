@@ -1,17 +1,38 @@
 import sys
 import os
 import numpy as np
-import tensorflow as tf
-from cnn_model import CNN_model 
-import data_handler as dh
-import metrics
-
-import time
-import datetime
-
+#import tensorflow as tf
+#from cnn_model import CNN_model 
+#import data_handler as dh
+#import metrics
+from parser import get_arguments
+from parser import print_options
+#import time
+#import datetime
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 
+options = get_arguments(sys.argv[1:])
+print_options(options)
 
+def get_files(root):
+	train_files = [root+'/Train/'+train_file for train_file in os.listdir(root+'/Train')]
+	test_files = [root+'/Test/'+test_file for test_file in os.listdir(root+'/Test')]
+	return train_files, test_files
+
+def print_files(root):
+	print('\n'+'*' * 79 + '\n**' + ' ' * 34 + ' FILES ' + ' ' * 34 + '**\n' + '*' * 79)
+	print('Train')
+	print(''.join('\t%s\n' % t for t in os.listdir(options.root[0]+'/Train')))
+	print('Test')
+	print(''.join('\t%s\n' % t for t in os.listdir(options.root[0]+'/Test')))
+
+train_files, test_files = get_files(options.root[0])
+print_files(options.root[0])
+
+#print(str(train_files))
+#print(str(test_files))
+
+"""
 def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classes, conv_layers, pool_layers, fc_layers, train_batch_size, test_batch_size, num_epochs, dropout_param, output_file='Models/'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')):
     num_classes = len(classes)
     train_length = len(y_train)
@@ -108,69 +129,6 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
             test_times[-1] = time.time() - test_times[-1]
     return y_test, np.array(predictions, dtype=np.uint8), accuracies, best_result, training_time, test_times
 
-"""
-train_ds = [
-		'Datasets/Round4/DS5/Train/Copia.fa',
-		'Datasets/Round4/DS5/Train/Gypsy.fa',
-		'Datasets/Round4/DS5/Train/Bel-Pao.fa',
-		'Datasets/Round4/DS5/Train/ERV.fa',
-		'Datasets/Round4/DS5/Train/L1.fa',
-#		'Datasets/Round4/DS5/Train/SINE.fa',
-		'Datasets/Round4/DS5/Train/Mariner.fa',
-		'Datasets/Round4/DS5/Train/hAT.fa',
-		'Datasets/Round4/DS5/Train/Mutator.fa',
-		'Datasets/Round4/DS5/Train/PIF.fa',
-#		'Datasets/Round4/DS5/Train/CACTA.fa',
-		'Datasets/Round4/DS5/Train/Random.fa'
-	]
-test_ds = [
-		'Datasets/Round4/DS5/Test/Copia.fa',
-		'Datasets/Round4/DS5/Test/Gypsy.fa',
-		'Datasets/Round4/DS5/Test/Bel-Pao.fa',
-		'Datasets/Round4/DS5/Test/ERV.fa',
-		'Datasets/Round4/DS5/Test/L1.fa',
-#		'Datasets/Round4/DS5/Test/SINE.fa',
-		'Datasets/Round4/DS5/Test/Mariner.fa',
-		'Datasets/Round4/DS5/Test/hAT.fa',
-		'Datasets/Round4/DS5/Test/Mutator.fa',
-		'Datasets/Round4/DS5/Test/PIF.fa',
-#		'Datasets/Round4/DS5/Test/CACTA.fa',
-		'Datasets/Round4/DS5/Test/Random.fa'
-	]
-"""
-train_ds = [
-		'Datasets/Round4/DS4/Train/LTR.fa',
-		'Datasets/Round4/DS4/Train/LINE.fa',
-		'Datasets/Round4/DS4/Train/SINE.fa',
-		'Datasets/Round4/DS4/Train/TIR.fa',
-		'Datasets/Round4/DS4/Train/Random.fa'
-	]
-test_ds = [
-		'Datasets/Round4/DS4/Test/LTR.fa',
-		'Datasets/Round4/DS4/Test/LINE.fa',
-		'Datasets/Round4/DS4/Test/SINE.fa',
-		'Datasets/Round4/DS4/Test/TIR.fa',
-		'Datasets/Round4/DS4/Test/Random.fa'
-	]
-"""
-train_ds = [
-		'Datasets/lncRNA/train/lncRNA.fa',
-		'Datasets/lncRNA/train/mRNA.fa'
-	]
-test_ds = [
-		'Datasets/lncRNA/test/lncRNA.fa',
-		'Datasets/lncRNA/test/mRNA.fa'
-	]
-"""
-conv_filters = [[30, 64],[30, 32],[30, 16]]
-pool_filters = [20, 20, 10]
-fc_filters = [1500, 500]
-train_batch_size = 32
-test_batch_size = 32
-num_epochs = 50
-dropout_param = 0.5
-filename_prefix = 'Round4_DS4'
-
 db = dh.DataHandler(train_ds, test_ds, region_size=conv_filters[0][0], pool_size=pool_filters[0])
 classes = [name.split('.fa')[0] for name in db.classes]
 
@@ -208,3 +166,4 @@ m.save_confusion_matrix(title='CNN classifying DS4')
 m.save_learning_curve(accuracies, acc=0)
 
 print('\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times)))
+"""
