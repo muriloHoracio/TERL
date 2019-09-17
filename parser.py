@@ -1,5 +1,6 @@
 import os
 import argparse
+from itertools import izip
 import time
 import datetime
 
@@ -194,16 +195,25 @@ Example of --feature-maps:
 	return options
 
 def print_options(options):
-	msg = 'Root: '+options.root[0]
-	msg += '\nTrain batch size: '+str(options.train_batch_size)
-	msg += '\nTest batch size: '+str(options.test_batch_size)
-	msg += '\nEpochs: '+str(options.epochs)
-	msg += '\nDropout: '+str(options.dropout)
-	msg += '\nNumber of layers: '+str(options.number_of_layers)
-	msg += '\nArchitecture:\n\t'+'\t'.join([str(a) for a in options.architecture])
-	msg += '\nFunctions:\n\t'+'\t'.join([str(f) for f in options.functions])
-	msg += '\nWidths:\n\t'+'\t'.join([str(w) for w in options.widths])
-	msg += '\nStrides:\n\t'+'\t'.join([str(s) for s in options.strides])
-	msg += '\nFeature maps:\n\t'+'\t'.join([str(f) for f in options.feature_maps])
-	msg += '\nPrefix: '+options.prefix[0]
-	print(msg)
+	print('*' * 79 + '\n**' + ' ' * 33 + ' OPTIONS ' + ' ' * 33 + '**\n' + '*' * 79)
+	print('%20s %-25s' % ('Root:',options.root[0]))
+	print('%20s %-25d' % ('Train batch:',options.train_batch_size[0]))
+	print('%20s %-25d' % ('Test batch:',options.test_batch_size[0]))
+	print('%20s %-25d' % ('Epochs:',options.epochs[0]))
+	print('%20s %-25.2f' % ('Dropout:',options.dropout[0]))
+	print('%20s %-25d' % ('Number of layers:',options.number_of_layers[0]))
+	print('%20s %-25s' % ('Prefix:',options.prefix[0]))
+	print('%20s %-50s' % ('Architecture:',''.join('%-7s' % t for t in izip(options.architecture))))
+	print('%20s %-50s' % ('Functions:',''.join('%-7s' % t for t in izip(options.functions))))
+	print('%20s %-50s' % ('Widths:',''.join('%-7s' % t for t in izip(options.widths))))
+	print('%20s %-50s' % ('Strides:',''.join('%-7s' % t for t in izip(options.widths))))
+	feature_maps_string = '%20s ' % 'Feature maps:'
+	j = 0
+	for i in range(len(options.architecture)):
+		if options.architecture[i] == 'conv':
+			feature_maps_string += '%-7s' % str(options.feature_maps[j])
+			j += 1
+		else:
+			feature_maps_string += '%-7s' % '-'
+	print(feature_maps_string)
+
