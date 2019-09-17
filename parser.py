@@ -6,7 +6,7 @@ import datetime
 
 HELP_MSG = '\n\nUse python cnn_train.py -h to see all options and examples of usage'
 
-def get_arguments(arguments):
+def get_options(arguments):
 	parser = argparse.ArgumentParser()
 
 	parser.add_argument(
