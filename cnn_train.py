@@ -125,7 +125,7 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
             test_times[-1] = time.time() - test_times[-1]
     return y_test, np.array(predictions, dtype=np.uint8), accuracies, best_result, training_time, test_times
 
-options = get_arguments(sys.argv[1:])
+options = get_options(sys.argv[1:])
 print_options(options)
 
 train_files, test_files = get_files(options.root[0])
