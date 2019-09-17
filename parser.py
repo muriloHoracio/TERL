@@ -25,7 +25,7 @@ class"""
 		dest = 'number_of_layers',
 		type = int,
 		nargs = 1,
-		default = 8,
+		default = [8],
 		required = False,
 		help = """Number of layers, not including the classification
 layer"""
@@ -87,7 +87,7 @@ Example of --widths:
 	)
 
 	parser.add_argument(
-		'-cs','--strides',
+		'-s','--strides',
 		dest = 'strides',
 		type = int,
 		nargs = '+',
@@ -123,7 +123,7 @@ Example of --feature-maps:
 		dest = 'train_batch_size',
 		type = int,
 		nargs = 1,
-		default = 32,
+		default = [32],
 		required = False,
 		help = """Train batch size"""
 	)
@@ -133,7 +133,7 @@ Example of --feature-maps:
 		dest = 'test_batch_size',
 		type = int,
 		nargs = 1,
-		default = 32,
+		default = [32],
 		required = False,
 		help = """Test batch size"""
 	)
@@ -143,7 +143,7 @@ Example of --feature-maps:
 		dest = 'epochs',
 		type = int,
 		nargs = 1,
-		default = 30,
+		default = [30],
 		required = False,
 		help = """Number of epochs"""
 	)
@@ -153,7 +153,7 @@ Example of --feature-maps:
 		dest = 'dropout',
 		type = float,
 		nargs = 1,
-		default = 0.5,
+		default = [0.5],
 		required = False,
 		help = """Dropout rate"""
 	)
@@ -176,13 +176,13 @@ Example of --feature-maps:
 	if not os.path.isdir(options.root[0] + '/Test'):
 		print('ERROR\n\nPath: '+options.root[0]+'/Test does not exist'+HELP_MSG)
 		exit(2)
-	if not (options.number_of_layers == len(options.architecture)):
+	if not (options.number_of_layers[0] == len(options.architecture)):
 		print('ERROR\n\nNumber of layers is not equal to the number of layers defined on --architecture parameter'+HELP_MSG)
 		exit(3)
-	if not (options.number_of_layers == len(options.functions)):
+	if not (options.number_of_layers[0] == len(options.functions)):
 		print('ERROR\n\nNumber of functions is not equal to the number of layers defined on --architecture parameter'+HELP_MSG)
 		exit(4)
-	if not (options.number_of_layers == len(options.widths)):
+	if not (options.number_of_layers[0] == len(options.widths)):
 		print('ERROR\n\nNumber of widths is not equal to the number of layers defined on --architecture parameter'+HELP_MSG)
 		exit(5)
 	if not (len([a for a in options.architecture if a=='conv']) == len(options.feature_maps)):
