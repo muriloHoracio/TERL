@@ -3,7 +3,7 @@ import os
 import numpy as np
 #import tensorflow as tf
 #from cnn_model import CNN_model 
-#import data_handler as dh
+import data_handler as dh
 #import metrics
 from parser import get_arguments
 from parser import print_options
@@ -11,29 +11,25 @@ from parser import print_options
 #import datetime
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 
-options = get_arguments(sys.argv[1:])
-print_options(options)
-
 def get_files(root):
 	train_files = [root+'/Train/'+train_file for train_file in os.listdir(root+'/Train')]
 	test_files = [root+'/Test/'+test_file for test_file in os.listdir(root+'/Test')]
 	return train_files, test_files
 
 def print_files(root):
-	print('\n'+'*' * 79 + '\n**' + ' ' * 34 + ' FILES ' + ' ' * 34 + '**\n' + '*' * 79)
-	print('Train')
-	print(''.join('\t%s\n' % t for t in os.listdir(options.root[0]+'/Train')))
-	print('Test')
-	print(''.join('\t%s\n' % t for t in os.listdir(options.root[0]+'/Test')))
+	print('*' * 79 + '\n**' + ' ' * 34 + ' FILES ' + ' ' * 34 + '**\n' + '*' * 79)
+	print('Train'+''.join('\n\t%s' % t for t in os.listdir(options.root[0]+'/Train')))
+	print('Test'+''.join('\n\t%s' % t for t in os.listdir(options.root[0]+'/Test')))
 
-train_files, test_files = get_files(options.root[0])
-print_files(options.root[0])
+def print_data_info(db):
+	print('*' * 79 + '\n**' + ' ' * 32 + ' DATA INFO ' + ' ' * 32 + '**\n' + '*' * 79)
+	print('%20s %-50s' % ('Classes:',', '.join(db.classes)))
+	print("%20s %-50d" % ("Train size:", db.train_size))
+	print("%20s %-50d" % ("Test size:", db.test_size))
+	print("%20s %-50d" % ("Longest sequence:", db.max_len))
+	print("%20s %-50d" % ("Vocabulary size:", db.vocab_size))
 
-#print(str(train_files))
-#print(str(test_files))
-
-"""
-def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classes, conv_layers, pool_layers, fc_layers, train_batch_size, test_batch_size, num_epochs, dropout_param, output_file='Models/'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')):
+def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classes, architecture, functions, widths, strides, feature_maps, train_batch_size, test_batch_size, epochs, dropout, output_file='Models/'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')):
     num_classes = len(classes)
     train_length = len(y_train)
     test_length = len(y_test)
@@ -129,25 +125,15 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
             test_times[-1] = time.time() - test_times[-1]
     return y_test, np.array(predictions, dtype=np.uint8), accuracies, best_result, training_time, test_times
 
-db = dh.DataHandler(train_ds, test_ds, region_size=conv_filters[0][0], pool_size=pool_filters[0])
-classes = [name.split('.fa')[0] for name in db.classes]
+options = get_arguments(sys.argv[1:])
+print_options(options)
 
-print("\n\n++++++++++++++++++++\n%s\n++++++++++++++++++++" % "RUN INFO")
-print("%30s  %s" % ("Classes",str(classes)))
-print("%30s  %7d" % ("Train size", db.train_size))
-print("%30s  %7d" % ("Test size", db.test_size))
-print("%30s  %7d" % ("Longest sequence", db.max_len))
-print("%30s  %7d" % ("Vocabulary size", db.vocab_size))
-print("%30s  %10s" % ("Convolutional filters", str(conv_filters)))
-print("%30s  %10s" % ("Pooling filters", str(pool_filters)))
-print("%30s  %10s" % ("FC filters", str(fc_filters)))
-print("%30s  %7d" % ("Train batch size",train_batch_size))
-print("%30s  %7d" % ("Validation batch size",test_batch_size))
-print("%30s  %7d" % ("Number of epochs",num_epochs))
-print("%30s  %7f" % ("Dropout rate",dropout_param))
+train_files, test_files = get_files(options.root[0])
+print_files(options.root[0])
 
-#np.random.seed(10)
-#tf.compat.v1.random.set_random_seed(10)
+db = dh.DataHandler(train_files, test_files)
+print_data_info(db)
+
 shuffled = np.random.permutation(range(db.train_size))
 db.x_train = db.x_train[shuffled]
 db.y_train = db.y_train[shuffled]
@@ -156,7 +142,24 @@ shuffled = np.random.permutation(range(db.test_size))
 db.x_test = db.x_test[shuffled]
 db.y_test = db.y_test[shuffled]
 
-labels, predictions, accuracies, best_result, training_time, test_times = train_evaluate(db.x_train, db.y_train, db.x_test, db.y_test, db.vocab_size, db.max_len, classes, conv_filters, pool_filters, fc_filters, train_batch_size, test_batch_size, num_epochs, dropout_param)
+labels, predictions, accuracies, best_result, training_time, test_times = train_evaluate(
+	db.x_train, 
+	db.y_train, 
+	db.x_test,
+	db.y_test,
+	db.vocab_size,
+	db.max_len,
+	db.classes,
+	options.architecture,
+	options.functions,
+	options.widths,
+	options.strides,
+	options.feature_maps,
+	options.train_batch_size,
+	options.test_batch_size,
+	options.epochs,
+	options.dropout_param
+)
 
 m = metrics.Metric(labels, best_result[1], classes=classes, filename_prefix=filename_prefix)
 m.print_report()
@@ -166,4 +169,4 @@ m.save_confusion_matrix(title='CNN classifying DS4')
 m.save_learning_curve(accuracies, acc=0)
 
 print('\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times)))
-"""
+
