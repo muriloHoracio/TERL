@@ -15,7 +15,7 @@ def get_options(arguments):
 		type = str,
 		nargs = 1,
 		required = True,
-		help = """Root containg "train" and  "test" folders  that 
+		help = """Root containg "train" and  "test" folders  that
 contain train files and test files.  Each  file
 must be named according  to  the  correspondent
 class"""
