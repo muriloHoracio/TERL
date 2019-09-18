@@ -1,15 +1,16 @@
 import sys
 import os
 import numpy as np
-#import tensorflow as tf
-#from cnn_model import CNN_model 
+import tensorflow.compat.v1 as tf
+from cnn_model import CNN_model
 import data_handler as dh
 #import metrics
-from parser import get_arguments
+from parser import get_options
 from parser import print_options
-#import time
-#import datetime
+import time
+import datetime
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
+tf.disable_v2_behavior()
 
 def get_files(root):
 	train_files = [root+'/Train/'+train_file for train_file in os.listdir(root+'/Train')]
@@ -29,101 +30,102 @@ def print_data_info(db):
 	print("%20s %-50d" % ("Longest sequence:", db.max_len))
 	print("%20s %-50d" % ("Vocabulary size:", db.vocab_size))
 
-def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classes, architecture, functions, widths, strides, feature_maps, train_batch_size, test_batch_size, epochs, dropout, output_file='Models/'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')):
-    num_classes = len(classes)
-    train_length = len(y_train)
-    test_length = len(y_test)
-    num_it_pe = int(train_length/train_batch_size) #number of iterations per epoch
-    with tf.Graph().as_default():
-        session_conf = tf.ConfigProto(
-            allow_soft_placement=True,
-            log_device_placement=False)
-        sess = tf.Session(config=session_conf)
-        with sess.as_default():
-            cnn = CNN_model( 
-                    num_classes,
-                    conv_layers,
-                    pool_layers,
-				    fc_layers,
-                    vocab_size,
-                    max_len
-                )
-            cnn.print_layers_shape()
+def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classes, architecture, functions, widths, strides, feature_maps, train_batch_size, test_batch_size, epochs, dropout=0.5, output_file='Models/'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')):
+	num_classes = len(classes)
+	train_length = len(y_train)
+	test_length = len(y_test)
+	num_it_pe = int(train_length/train_batch_size) #number of iterations per epoch
+	with tf.Graph().as_default():
+		session_conf = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
+		sess = tf.Session(config=session_conf)
+		with sess.as_default():
+			cnn = CNN_model(
+				num_classes,
+				architecture,
+				functions,
+				widths,
+				strides,
+				feature_maps,
+				vocab_size,
+				max_len
+			)
+			#cnn.print_layers_shape()
+"""
+			global_step = tf.Variable(0, name="global_step", trainable=False)
+			optimizer = tf.train.AdamOptimizer(1e-3) #learning rate
+			grads_and_vars = optimizer.compute_gradients(cnn.loss)
+			train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
 
-            global_step = tf.Variable(0, name="global_step", trainable=False)
-            optimizer = tf.train.AdamOptimizer(1e-3) #learning rate
-            grads_and_vars = optimizer.compute_gradients(cnn.loss)
-            train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
+			pre_x = tf.placeholder(tf.uint8,[None, max_len])
+			pre_y = tf.placeholder(tf.uint8,[None])
+			one_hot_x = tf.one_hot(pre_x, vocab_size, dtype=tf.float32)
+			one_hot_y = tf.one_hot(pre_y, num_classes, dtype=tf.float32)
 
-            pre_x = tf.placeholder(tf.uint8,[None, max_len])
-            pre_y = tf.placeholder(tf.uint8,[None])
-            one_hot_x = tf.one_hot(pre_x, vocab_size, dtype=tf.float32)
-            one_hot_y = tf.one_hot(pre_y, num_classes, dtype=tf.float32)
+			accuracies = []
+			training_time = 0
+			test_times = []
+			best_result = [0, []]
+			saver = tf.train.Saver(tf.global_variables())
+			sess.run([tf.global_variables_initializer(),tf.local_variables_initializer()])
+			def train_step(x_batch, y_batch):
+				feed_dict = {
+					cnn.x_input: x_batch,
+					cnn.y_input: y_batch,
+					cnn.dropout_param: dropout_param
+				}
+				_, step = sess.run([train_op, global_step], feed_dict)
 
-            accuracies = []
-            training_time = 0
-            test_times = []
-            best_result = [0, []]
-            saver = tf.train.Saver(tf.global_variables())
-            sess.run([tf.global_variables_initializer(),tf.local_variables_initializer()])
-            def train_step(x_batch, y_batch):
-                feed_dict = {
-                    cnn.x_input: x_batch,
-                    cnn.y_input: y_batch,
-                    cnn.dropout_param: dropout_param
-                }
-                _, step = sess.run([train_op, global_step], feed_dict)
+			def eval_step(x_batch, y_batch):
+				feed_dict = {
+					cnn.x_input: x_batch,
+					cnn.y_input: y_batch,
+					cnn.dropout_param: dropout_param
+				}
+				predictions = sess.run(cnn.predictions, feed_dict)
+				return predictions
 
-            def eval_step(x_batch, y_batch):
-                feed_dict = {
-                    cnn.x_input: x_batch,
-                    cnn.y_input: y_batch,
-                    cnn.dropout_param: dropout_param
-                }
-                predictions = sess.run(cnn.predictions, feed_dict)
-                return predictions
+			def evaluate(epoch, test_len, batch_size, x_test, y_test):
+				predictions = np.array([], dtype=np.uint8)
+				for i in range(0, test_len, batch_size):
+					x_batch = x_test[i : i + batch_size]
+					y_batch = y_test[i : i + batch_size]
+					pre_xo = sess.run(one_hot_x, feed_dict={pre_x:x_batch})
+					x_batch = pre_xo.reshape(x_batch.shape[0], max_len, vocab_size, 1)
+					y_batch = sess.run(one_hot_y, feed_dict={pre_y:y_batch})
+					predictions = np.concatenate([predictions, eval_step(x_batch, y_batch)])
+				m = metrics.Metric(y_test, predictions, classes=classes)
+				accuracies.append([epoch, m.accuracy_M, m.accuracy_m, m.accuracy])
+				return predictions
 
-            def evaluate(epoch, test_len, batch_size, x_test, y_test):
-                predictions = np.array([], dtype=np.uint8)
-                for i in range(0, test_len, batch_size):
-                    x_batch = x_test[i : i + batch_size]
-                    y_batch = y_test[i : i + batch_size]
-                    pre_xo = sess.run(one_hot_x, feed_dict={pre_x:x_batch})
-                    x_batch = pre_xo.reshape(x_batch.shape[0], max_len, vocab_size, 1)
-                    y_batch = sess.run(one_hot_y, feed_dict={pre_y:y_batch})
-                    predictions = np.concatenate([predictions, eval_step(x_batch, y_batch)])
-                m = metrics.Metric(y_test, predictions, classes=classes)
-                accuracies.append([epoch, m.accuracy_M, m.accuracy_m, m.accuracy])
-                return predictions
+			#TRAIN
+			training_time = time.time()
+			for epoch in range(num_epochs):
+				for batch in range(0, train_length, train_batch_size):
+					x_batch = x_train[batch : batch + train_batch_size]
+					y_batch = y_train[batch : batch + train_batch_size]
+					pre_xo = sess.run(one_hot_x, feed_dict={pre_x:x_batch})
+					x_batch = pre_xo.reshape(x_batch.shape[0], max_len, vocab_size, 1)
+					y_batch = sess.run(one_hot_y, feed_dict={pre_y:y_batch})
+					train_step(x_batch, y_batch)
+					current_step = tf.train.global_step(sess, global_step)
+				shuffle_indices = np.random.permutation(range(train_length))
+				x_train = x_train[shuffle_indices]
+				y_train = y_train[shuffle_indices]
+				test_times.append(time.time())
+				predictions = evaluate(epoch, test_length, test_batch_size, x_test, y_test)
+				test_times[-1] = time.time() - test_times[-1]
+				if accuracies[-1][1] > best_result[0]: best_result = [accuracies[-1][1], np.copy(predictions)]
+				time_str = datetime.datetime.now().isoformat()
+				print(time_str+': '+str(accuracies[-1]))
+			training_time = time.time() - training_time
+			saver.save(sess, output_file)
 
-            #TRAIN
-            training_time = time.time()
-            for epoch in range(num_epochs):
-                for batch in range(0, train_length, train_batch_size):
-                    x_batch = x_train[batch : batch + train_batch_size]
-                    y_batch = y_train[batch : batch + train_batch_size]
-                    pre_xo = sess.run(one_hot_x, feed_dict={pre_x:x_batch})
-                    x_batch = pre_xo.reshape(x_batch.shape[0], max_len, vocab_size, 1)
-                    y_batch = sess.run(one_hot_y, feed_dict={pre_y:y_batch})
-                    train_step(x_batch, y_batch)
-                    current_step = tf.train.global_step(sess, global_step)
-                shuffle_indices = np.random.permutation(range(train_length))
-                x_train = x_train[shuffle_indices]
-                y_train = y_train[shuffle_indices]
-                test_times.append(time.time())
-                predictions = evaluate(epoch, test_length, test_batch_size, x_test, y_test)
-                test_times[-1] = time.time() - test_times[-1]
-                if accuracies[-1][1] > best_result[0]: best_result = [accuracies[-1][1], np.copy(predictions)]
-                time_str = datetime.datetime.now().isoformat()
-                print(time_str+': '+str(accuracies[-1]))
-            training_time = time.time() - training_time
-            saver.save(sess, output_file)
-
-            #TEST
-            test_times.append(time.time())
-            predictions = evaluate(epoch, test_length, test_batch_size, x_test, y_test)
-            test_times[-1] = time.time() - test_times[-1]
-    return y_test, np.array(predictions, dtype=np.uint8), accuracies, best_result, training_time, test_times
+			#TEST
+			test_times.append(time.time())
+			predictions = evaluate(epoch, test_length, test_batch_size, x_test, y_test)
+			test_times[-1] = time.time() - test_times[-1]
+	return y_test, np.array(predictions, dtype=np.uint8), accuracies, best_result, training_time, test_times
+"""
 
 options = get_options(sys.argv[1:])
 print_options(options)
@@ -142,9 +144,10 @@ shuffled = np.random.permutation(range(db.test_size))
 db.x_test = db.x_test[shuffled]
 db.y_test = db.y_test[shuffled]
 
-labels, predictions, accuracies, best_result, training_time, test_times = train_evaluate(
-	db.x_train, 
-	db.y_train, 
+#labels, predictions, accuracies, best_result, training_time, test_times =
+train_evaluate(
+	db.x_train,
+	db.y_train,
 	db.x_test,
 	db.y_test,
 	db.vocab_size,
@@ -155,12 +158,12 @@ labels, predictions, accuracies, best_result, training_time, test_times = train_
 	options.widths,
 	options.strides,
 	options.feature_maps,
-	options.train_batch_size,
-	options.test_batch_size,
-	options.epochs,
-	options.dropout_param
+	options.train_batch_size[0],
+	options.test_batch_size[0],
+	options.epochs[0],
+	options.dropout[0]
 )
-
+"""
 m = metrics.Metric(labels, best_result[1], classes=classes, filename_prefix=filename_prefix)
 m.print_report()
 m.save_report()
@@ -169,4 +172,4 @@ m.save_confusion_matrix(title='CNN classifying DS4')
 m.save_learning_curve(accuracies, acc=0)
 
 print('\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times)))
-
+"""
