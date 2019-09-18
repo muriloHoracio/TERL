@@ -1,134 +1,197 @@
 import os
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import learn
-os.environ['TF_CPP_MIN_LOG_LEVEL']='3'   
-class CNN_model(object):
-	def __init__(self,num_classes, conv_filters, pool_filters, fc_filters, vocab_len, max_len, l2_reg_lambda=0.0):
-		last_conv_out_shape = max_len - conv_filters[0][0] + 1
-		for i in pool_filters:
-			last_conv_out_shape = int(np.floor(last_conv_out_shape/i))
-		flatten_shape = last_conv_out_shape*conv_filters[-1][1]
+os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
+tf.disable_v2_behavior()
+
+def calculate_flatten_shape(architecture, widths, feature_maps, max_len):
+	last_shape = max_len - widths[0] + 1
+	last_feature_map = 0
+	conv_layer = 0
+	for i in range(len(architecture)):
+		if architecture[i] == 'pool':
+			last_shape = int(np.ceil(last_shape/widths[i]))
+		if architecture[i] == 'conv':
+			last_feature_map = feature_maps[conv_layer]
+			conv_layer += 1
+	return last_shape * last_feature_map
+
+def print_tensors(W, B, layers):
+	print('*' * 79 + '\n**' + ' ' * 32 + ' RUN  INFO ' + ' ' * 32 + '**\n' + '*' * 79)
+	print('W:')
+	for w in W:
+		print('\t'+w+'\t'+str(W[w]))
+	print('B:')
+	for b in B:
+		print('\t'+b+'\t'+str(B[b]))
+
+	print('*' * 79 + '\n**' + ' ' * 33 + ' TENSORS ' + ' ' * 33 + '**\n' + '*' * 79)
+	for layer in layers:
+		print(str(layer))
+
+def create_layers(architecture, functions, widths, strides, feature_maps,	vocab_len, max_len, x_input, W, B, flatten_shape):
+	layers = [x_input]
+	conv_layer_counter = 0
+	pool_layer_counter = 0
+	fc_layer_counter = 0
+	for layer in range(len(architecture)):
+		if architecture[layer] == 'conv':
+			layers.append(
+				tf.nn.conv2d(
+					layers[-1],
+					W['conv'+str(layer)],
+					strides = [1, 1, strides[layer], 1],
+					padding = 'VALID' if layer == 0 else 'SAME'
+				)
+			)
+			layers.append(
+				tf.nn.relu(tf.nn.bias_add(layers[-1], B['conv'+str(layer)]))
+			)
+			conv_layer_counter += 1
+		elif architecture[layer] == 'pool':
+			layers.append(
+				tf.nn.avg_pool(
+					layers[-1],
+					ksize = [1, widths[layer], 1, 1],
+					strides = [1, 1, strides[layer], 1],
+					padding="SAME"
+				)
+			)
+			pool_layer_counter += 1
+		elif architecture[layer] == 'fc':
+			if fc_layer_counter == 0:
+				layers.append(
+					tf.reshape(
+						layers[-1],
+						[-1, flatten_shape]
+					)
+				)
+			layers.append(
+				tf.nn.relu(
+					tf.matmul(
+						layers[-1],
+						W['fc'+str(layer)] + B['fc'+str(layer)],
+						name='relu_fc'+str(layer)
+					)
+				)
+			)
+			fc_layer_counter += 1
+		elif architecture[layer] == 'pred':
+			layers.append(
+				tf.matmul(layers[-1], W['pred']) + B['pred']
+			)
+	return layers
+
+def create_learnable_parameters_tensors(architecture, widths, feature_maps, vocab_len, flatten_shape):
+	W = dict()
+	B = dict()
+	conv_layer_counter = 0
+	fc_layer_counter = 0
+	for layer in range(len(architecture)):
+		if architecture[layer] == 'conv':
+			W['conv'+str(layer)] = tf.Variable(
+				tf.truncated_normal(
+					[
+						vocab_len if conv_layer_counter == 0 else 1,
+						widths[layer],
+						1 if conv_layer_counter == 0 else feature_maps[conv_layer_counter-1],
+						feature_maps[conv_layer_counter]
+					],
+					stddev=0.1,
+					dtype=tf.float32
+				),
+				name='W_conv'+str(layer)
+			)
+			B['conv'+str(layer)] = tf.Variable(
+				tf.truncated_normal(
+					[
+						feature_maps[conv_layer_counter]
+					],
+					stddev=0.1,
+					dtype=tf.float32
+				),
+				name='b_conv'+str(layer)
+			)
+			conv_layer_counter += 1
+		elif architecture[layer] == 'fc':
+			W['fc'+str(layer)] = tf.Variable(
+				tf.truncated_normal(
+					[
+						flatten_shape if fc_layer_counter == 0 else widths[layer - 1],
+						widths[layer]
+					],
+					stddev=0.1
+				),
+				name='W_fc'+str(layer)
+			)
+			B['fc'+str(layer)] = tf.Variable(
+				tf.truncated_normal(
+					[
+						widths[layer]
+					],
+					stddev=0.1
+				),
+				name='b_fc'+str(layer)
+			)
+			fc_layer_counter += 1
+		elif architecture[layer] == 'pred':
+			W['pred'] = tf.Variable(
+				tf.truncated_normal(
+					[
+						widths[layer-1],
+						widths[layer]
+					],
+					stddev=0.1
+				),
+				name='W_pred'
+			)
+			B['pred'] = tf.Variable(
+				tf.truncated_normal(
+					[
+						widths[layer]
+					],
+					stddev=0.1
+				),
+				name='b_pred'
+			)
+	return W, B
+
+class CNN_model:
+	def __init__(self, num_classes, architecture, functions, widths, strides, feature_maps,	vocab_len, max_len,	l2_reg_lambda=0.0):
+		flatten_shape = calculate_flatten_shape(architecture, widths, feature_maps, max_len)
+		architecture.append('pred')
+		widths.append(num_classes)
 
 		#the x_input will have a size of max_len
-		self.x_input = tf.placeholder(tf.float32, [None, max_len, vocab_len, 1], name="x_input")
+		self.x_input = tf.placeholder(tf.float32, [None, vocab_len, max_len, 1], name="x_input")
 		self.y_input = tf.placeholder(tf.float32, [None, num_classes], name="y_input")
 		self.dropout_param = tf.placeholder(tf.float32, name="dropout_param")
 
-		#initializes the first layer with conv_filters[0][1] filters, each of size conv_filters[0][0], the initial random weights and biases.
-		W_conv1 = tf.Variable(tf.truncated_normal([
-				conv_filters[0][0],
-				vocab_len,
-				1,
-				conv_filters[0][1]
-			], stddev=0.1, dtype=tf.float32), name="W_conv1")
-		b_conv1 = tf.Variable(tf.truncated_normal([conv_filters[0][1]],stddev=0.1, dtype=tf.float32),name="b_conv1")
+		#initializes the bias and weigth tensors
+		W, B = create_learnable_parameters_tensors(architecture, widths, feature_maps, vocab_len, flatten_shape)
 
-		#initializes the second layer with conv_filters[1][1] filters, each of size conv_filters[1][0], the initial random weights and biases.
-		W_conv2 = tf.Variable(tf.truncated_normal([
-				conv_filters[1][0], 
-				1, 
-				conv_filters[0][1], 
-				conv_filters[1][1]
-			], stddev=0.1, dtype=tf.float32), name="W_conv2")
-		b_conv2 = tf.Variable(tf.truncated_normal([conv_filters[1][1]],stddev=0.1, dtype=tf.float32),name="b_conv2")
+		#create the cnn's layers
+		self.layers = create_layers(architecture, functions, widths, strides, feature_maps,	vocab_len, max_len, self.x_input, W, B, flatten_shape)
 
-		#initializes the third layer with conv_filters[2][1] filters, each of size conv_filters[2][0], the initial random weights and biases.
-		W_conv3 = tf.Variable(tf.truncated_normal([
-				conv_filters[2][0],
-				1,
-				conv_filters[1][1],
-				conv_filters[2][1]
-			], stddev=0.1, dtype=tf.float32), name='W_conv3')
-		b_conv3 = tf.Variable(tf.truncated_normal([conv_filters[2][1]],stddev=0.1,dtype=tf.float32),name='b_conv3')
+		#prints tensors
+		print_tensors(W, B, self.layers)
 
-		#conv-relu-pool layer1
-		self.conv1 = tf.nn.conv2d(
-			self.x_input,
-			W_conv1,
-			strides = [1, 1, 1, 1],
-			padding="VALID"
-		)
-		self.relu1 = tf.nn.relu(tf.nn.bias_add(self.conv1, b_conv1))
-		#conv1_dropout = tf.nn.dropout(relu1, rate=self.dropout_param)
-		self.pool1 = tf.nn.avg_pool(
-			self.relu1,
-			ksize = [1,pool_filters[0],1,1],
-			strides = [1,pool_filters[0],1,1],
-			padding="VALID"
-		)
-
-		#conv-relu-pool layer2
-		self.conv2 = tf.nn.conv2d(
-			self.pool1,
-			W_conv2,
-			strides=[1, 1, 1, 1],
-			padding="VALID"
-		)
-		self.relu2 = tf.nn.relu(tf.nn.bias_add(self.conv2, b_conv2))
-		#conv2_dropout = tf.nn.dropout(relu2, rate=self.dropout_param)
-		self.pool2 = tf.nn.avg_pool(
-			self.relu2,
-			ksize = [1,pool_filters[1],1,1],
-			strides = [1,pool_filters[1],1,1],
-			padding="VALID"
-		)
-
-		#conv-relu-pool layer3
-		self.conv3 = tf.nn.conv2d(
-			self.pool2,
-			W_conv3,
-			strides=[1, 1, 1, 1],
-			padding="SAME"
-		)
-		self.relu3 = tf.nn.relu(tf.nn.bias_add(self.conv3, b_conv3))
-		#conv2_dropout = tf.nn.dropout(relu2, rate=self.dropout_param)
-		self.pool3 = tf.nn.avg_pool(
-			self.relu3,
-			ksize = [1,pool_filters[2],1,1],
-			strides = [1,pool_filters[2],1,1],
-			padding="VALID"
-		)
-
-		#pool1_dropout = tf.nn.dropout(pool1, rate=self.dropout_param)
-
-		#flatten
-		self.pool_flat = tf.reshape(self.pool3, [-1, flatten_shape])
-
-		#fc1
-		W_fc1 = tf.Variable(tf.truncated_normal([flatten_shape, fc_filters[0]], stddev=0.1),name="W_fc1")
-		b_fc1 = tf.Variable(tf.truncated_normal([fc_filters[0]], stddev=0.1),name="b_fc1")
-		self.fc1 = tf.nn.relu(tf.matmul(self.pool_flat,W_fc1) + b_fc1, name="relu_fc1")
-
-		#fc2
-		W_fc2 = tf.Variable(tf.truncated_normal([fc_filters[0],fc_filters[1]], stddev=0.1),name="W_fc2")
-		b_fc2 = tf.Variable(tf.truncated_normal([fc_filters[1]], stddev=0.1),name="b_fc2")
-		self.fc2 = tf.nn.relu(tf.matmul(self.fc1,W_fc2) + b_fc2, name="relu_fc2")
-
-		W_fc3 = tf.Variable(tf.truncated_normal([fc_filters[1],num_classes], stddev=0.1),name="W_fc3")
-		b_fc3 = tf.Variable(tf.truncated_normal([num_classes], stddev=0.1),name="b_fc3")
-		self.scores = tf.matmul(self.fc2,W_fc3)+b_fc3
-
-		self.predictions = tf.argmax(self.scores, 1, name="predictions")
+		self.predictions = tf.argmax(self.layers[-1], 1, name="predictions")
 		self.labels = tf.argmax(self.y_input, 1)
 
 		#losses
-		losses = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.scores, labels=self.y_input)
-		self.loss = tf.reduce_mean(losses) + l2_reg_lambda * (
-			tf.nn.l2_loss(W_conv1) + 
-			tf.nn.l2_loss(b_conv1) + 
-			tf.nn.l2_loss(W_conv2) +
-			tf.nn.l2_loss(b_conv2) +
-			tf.nn.l2_loss(W_conv3) +
-			tf.nn.l2_loss(b_conv3) +
-			tf.nn.l2_loss(W_fc1) +
-			tf.nn.l2_loss(b_fc1) +
-			tf.nn.l2_loss(W_fc2) +
-			tf.nn.l2_loss(b_fc2) +
-			tf.nn.l2_loss(W_fc3) +
-			tf.nn.l2_loss(b_fc3)
-			)
-
+		losses = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.layers[-1], labels=self.y_input)
+		loss_sum = 0
+		for layer in range(len(architecture)):
+			if architecture[layer] == 'conv':
+				loss_sum += tf.nn.l2_loss(W['conv'+str(layer)])
+				loss_sum += tf.nn.l2_loss(B['conv'+str(layer)])
+			elif architecture[layer] == 'fc':
+				loss_sum += tf.nn.l2_loss(W['fc'+str(layer)])
+				loss_sum += tf.nn.l2_loss(B['fc'+str(layer)])
+		self.loss = tf.reduce_mean(losses) + l2_reg_lambda * loss_sum
+"""
 		#predictions
 		self.correct_predictions = tf.equal(self.predictions, self.labels)
 		self.accuracy = tf.reduce_mean(tf.cast(self.correct_predictions, "float"), name="accuracy") #calulates the accuracy by summing all elements of correct_predictions and dividing it by the length of it
@@ -147,3 +210,4 @@ class CNN_model(object):
 		out += 'fc2 shape: '+str(self.fc2.shape)+'\n'
 		out += 'scores shape: '+str(self.scores.shape)+'\n'
 		print(out)
+"""
