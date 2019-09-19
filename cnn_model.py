@@ -166,7 +166,7 @@ class CNN_model:
 		#the x_input will have a size of max_len
 		self.x_input = tf.placeholder(tf.float32, [None, vocab_len, max_len, 1], name="x_input")
 		self.y_input = tf.placeholder(tf.float32, [None, num_classes], name="y_input")
-		self.dropout_param = tf.placeholder(tf.float32, name="dropout_param")
+		self.dropout = tf.placeholder(tf.float32, name="dropout_param")
 
 		#initializes the bias and weigth tensors
 		W, B = create_learnable_parameters_tensors(architecture, widths, feature_maps, vocab_len, flatten_shape)
