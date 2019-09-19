@@ -160,13 +160,12 @@ labels, predictions, accuracies, best_result, training_time, test_times = train_
 	options.epochs[0],
 	options.dropout[0]
 )
-"""
-m = metrics.Metric(labels, best_result[1], classes=classes, filename_prefix=filename_prefix)
+
+m = metrics.Metric(labels, best_result[1], classes=db.classes, filename_prefix=options.prefix[0])
 m.print_report()
 m.save_report()
 
-m.save_confusion_matrix(title='CNN classifying DS4')
+m.save_confusion_matrix(title='CNN classifying '+options.root[0])
 m.save_learning_curve(accuracies, acc=0)
 
 print('\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times)))
-"""
