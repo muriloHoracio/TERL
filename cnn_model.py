@@ -191,23 +191,7 @@ class CNN_model:
 				loss_sum += tf.nn.l2_loss(W['fc'+str(layer)])
 				loss_sum += tf.nn.l2_loss(B['fc'+str(layer)])
 		self.loss = tf.reduce_mean(losses) + l2_reg_lambda * loss_sum
-"""
+
 		#predictions
 		self.correct_predictions = tf.equal(self.predictions, self.labels)
 		self.accuracy = tf.reduce_mean(tf.cast(self.correct_predictions, "float"), name="accuracy") #calulates the accuracy by summing all elements of correct_predictions and dividing it by the length of it
-	def print_layers_shape(self):
-		out = 'conv1 shape: '+str(self.conv1.shape)+'\n'
-		out += 'relu1 shape: '+str(self.relu1.shape)+'\n'
-		out += 'pool1 shape: '+str(self.pool1.shape)+'\n'
-		out += 'conv2 shape: '+str(self.conv2.shape)+'\n'
-		out += 'relu2 shape: '+str(self.relu2.shape)+'\n'
-		out += 'pool2 shape: '+str(self.pool2.shape)+'\n'
-		out += 'conv3 shape: '+str(self.conv2.shape)+'\n'
-		out += 'relu3 shape: '+str(self.relu3.shape)+'\n'
-		out += 'pool3 shape: '+str(self.pool3.shape)+'\n'
-		out += 'flat shape: '+str(self.pool_flat.shape)+'\n'
-		out += 'fc1 shape: '+str(self.fc1.shape)+'\n'
-		out += 'fc2 shape: '+str(self.fc2.shape)+'\n'
-		out += 'scores shape: '+str(self.scores.shape)+'\n'
-		print(out)
-"""
