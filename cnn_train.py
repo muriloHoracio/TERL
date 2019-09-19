@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 from cnn_model import CNN_model
 import data_handler as dh
-#import metrics
+import metrics
 from parser import get_options
 from parser import print_options
 import time
@@ -30,11 +30,9 @@ def print_data_info(db):
 	print("%20s %-50d" % ("Longest sequence:", db.max_len))
 	print("%20s %-50d" % ("Vocabulary size:", db.vocab_size))
 
-def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classes, architecture, functions, widths, strides, feature_maps, train_batch_size, test_batch_size, epochs, dropout=0.5, output_file='Models/'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')):
-	num_classes = len(classes)
+def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classes, num_classes, architecture, functions, widths, strides, feature_maps, train_batch_size, test_batch_size, epochs, dropout=0.5, output_file='Models/'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')):
 	train_length = len(y_train)
 	test_length = len(y_test)
-	num_it_pe = int(train_length/train_batch_size) #number of iterations per epoch
 	with tf.Graph().as_default():
 		session_conf = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
 		sess = tf.Session(config=session_conf)
@@ -66,12 +64,12 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 			best_result = [0, []]
 			saver = tf.train.Saver(tf.global_variables())
 			sess.run([tf.global_variables_initializer(),tf.local_variables_initializer()])
-"""
+
 			def train_step(x_batch, y_batch):
 				feed_dict = {
 					cnn.x_input: x_batch,
 					cnn.y_input: y_batch,
-					cnn.dropout_param: dropout_param
+					cnn.dropout: dropout
 				}
 				_, step = sess.run([train_op, global_step], feed_dict)
 
@@ -79,7 +77,7 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 				feed_dict = {
 					cnn.x_input: x_batch,
 					cnn.y_input: y_batch,
-					cnn.dropout_param: dropout_param
+					cnn.dropout: dropout
 				}
 				predictions = sess.run(cnn.predictions, feed_dict)
 				return predictions
@@ -90,7 +88,7 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 					x_batch = x_test[i : i + batch_size]
 					y_batch = y_test[i : i + batch_size]
 					pre_xo = sess.run(one_hot_x, feed_dict={pre_x:x_batch})
-					x_batch = pre_xo.reshape(x_batch.shape[0], max_len, vocab_size, 1)
+					x_batch = pre_xo.reshape(x_batch.shape[0], vocab_size, max_len, 1)
 					y_batch = sess.run(one_hot_y, feed_dict={pre_y:y_batch})
 					predictions = np.concatenate([predictions, eval_step(x_batch, y_batch)])
 				m = metrics.Metric(y_test, predictions, classes=classes)
@@ -99,12 +97,12 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 
 			#TRAIN
 			training_time = time.time()
-			for epoch in range(num_epochs):
+			for epoch in range(epochs):
 				for batch in range(0, train_length, train_batch_size):
 					x_batch = x_train[batch : batch + train_batch_size]
 					y_batch = y_train[batch : batch + train_batch_size]
 					pre_xo = sess.run(one_hot_x, feed_dict={pre_x:x_batch})
-					x_batch = pre_xo.reshape(x_batch.shape[0], max_len, vocab_size, 1)
+					x_batch = pre_xo.reshape(x_batch.shape[0], vocab_size, max_len, 1)
 					y_batch = sess.run(one_hot_y, feed_dict={pre_y:y_batch})
 					train_step(x_batch, y_batch)
 					current_step = tf.train.global_step(sess, global_step)
@@ -125,7 +123,6 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 			predictions = evaluate(epoch, test_length, test_batch_size, x_test, y_test)
 			test_times[-1] = time.time() - test_times[-1]
 	return y_test, np.array(predictions, dtype=np.uint8), accuracies, best_result, training_time, test_times
-"""
 
 options = get_options(sys.argv[1:])
 print_options(options)
@@ -144,8 +141,7 @@ shuffled = np.random.permutation(range(db.test_size))
 db.x_test = db.x_test[shuffled]
 db.y_test = db.y_test[shuffled]
 
-#labels, predictions, accuracies, best_result, training_time, test_times =
-train_evaluate(
+labels, predictions, accuracies, best_result, training_time, test_times = train_evaluate(
 	db.x_train,
 	db.y_train,
 	db.x_test,
@@ -153,6 +149,7 @@ train_evaluate(
 	db.vocab_size,
 	db.max_len,
 	db.classes,
+	db.num_classes,
 	options.architecture,
 	options.functions,
 	options.widths,
