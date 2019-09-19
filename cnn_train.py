@@ -49,8 +49,7 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 				vocab_size,
 				max_len
 			)
-			#cnn.print_layers_shape()
-"""
+
 			global_step = tf.Variable(0, name="global_step", trainable=False)
 			optimizer = tf.train.AdamOptimizer(1e-3) #learning rate
 			grads_and_vars = optimizer.compute_gradients(cnn.loss)
@@ -67,6 +66,7 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 			best_result = [0, []]
 			saver = tf.train.Saver(tf.global_variables())
 			sess.run([tf.global_variables_initializer(),tf.local_variables_initializer()])
+"""
 			def train_step(x_batch, y_batch):
 				feed_dict = {
 					cnn.x_input: x_batch,
