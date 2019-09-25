@@ -14,10 +14,10 @@ def get_options(arguments):
 		type = str,
 		nargs = 1,
 		required = True,
-		help = """Root containg "train" and  "test" folders  that
-contain train files and test files.  Each  file
-must be named according  to  the  correspondent
-class"""
+		help = 	"""Root containg "train" and  "test" folders  that
+				contain train files and test files.  Each  file
+				must be named according  to  the  correspondent
+				class"""
 	)
 
 	parser.add_argument(
@@ -27,95 +27,99 @@ class"""
 		nargs = 1,
 		default = [8],
 		required = False,
-		help = """Number of layers, not including the classification
-layer"""
+		help = 	"""Number of layers, not including the classification
+				layer"""
 	)
 
 	parser.add_argument(
 		'-arc', '--architecture',
 		dest = 'architecture',
+		metavar = 'LAYER',
 		type = str,
 		nargs = '+',
 		default = ["conv", "pool", "conv", "pool", "conv", "pool", "fc", "fc"],
 		required = False,
-		help = """Architecture structure of the network. Must  be
-entered as strings separeted  by  spaces.  Each
-string defines the types of the  layers. "conv"
-stands for convolution  layers,  "pool"  stands
-for pooling layers and "fc"  stands  for  fully
-connected layers. The classification layer must
-not be included
-Example:
---architecture conv pool conv pool conv pool fc fc"""
+		help = 	"""Architecture structure of the network. Must  be
+				entered as strings separeted  by  spaces.  Each
+				string defines the types of the  layers. "conv"
+				stands for convolution  layers,  "pool"  stands
+				for pooling layers and "fc"  stands  for  fully
+				connected layers. The classification layer must
+				not be included. Example: --architecture   conv
+				pool conv pool conv pool fc fc"""
 	)
 
 	parser.add_argument(
 		'-f', '--functions',
-		dest = 'functions',
+		dest = 'activation_functions',
+		metavar = 'FUNCTION',
 		type = str,
 		nargs = '+',
 		default = ["relu", "avg", "relu", "avg", "relu", "avg", "relu", "relu"],
 		required = False,
-		help = """Activation functions and type of pooling layers
-ordered according to --architecture parameter's
-layers order. Must not include the function  of
-the classification layer
-Example of --architecture:
---architecture conv pool conv pool conv pool fc fc fc
-Example of --functions:
---fuctions relu avg relu avg relu avg relu relu"""
+		help = 	"""Activation functions and type of pooling layers
+				ordered according to --architecture parameter's
+				layers order. Must not include the function  of
+				the classification layer
+				Example of architectures:
+				--architecture conv pool conv pool conv pool fc fc fc
+				Example of functions:
+				--fuctions relu avg relu avg relu avg relu relu"""
 	)
 
 	parser.add_argument(
 		'-w','--widths',
 		dest = 'widths',
+		metavar = 'LAYER_WIDTH',
 		type = int,
 		nargs = '+',
 		default = [30, 20, 30, 20, 30, 10, 1500, 500],
 		required = False,
-		help = """Width  of  each  layer  ordered   according  to
---architecture  paramater. For "fc" layers, the
-number of neurons must be entered. The number of
-neurons for the classification layer must not be
-entered, since the number  of  neurons  on  this
-layer is defined  according  to  the  amount  of
-classes in train and test folders.
-Example of --architecture:
---architecture conv pool conv pool conv pool fc fc fc
-Example of --widths:
---widths 30 20 30 20 30 10 1500 500"""
+		help = 	"""Width  of  each  layer  ordered   according  to
+				--architecture  paramater. For "fc" layers, the
+				number of neurons must be entered. The number of
+				neurons for the classification layer must not be
+				entered, since the number  of  neurons  on  this
+				layer is defined  according  to  the  amount  of
+				classes in train and test folders.
+				Example of architecture:
+				--architecture conv pool conv pool conv pool fc fc fc
+				Example of widths:
+				--widths 30 20 30 20 30 10 1500 500"""
 	)
 
 	parser.add_argument(
 		'-s','--strides',
 		dest = 'strides',
+		metavar = 'STRIDE',
 		type = int,
 		nargs = '+',
 		default = [1, 20, 1, 20, 1, 10],
 		required = False,
-		help = """Strides  of  convolution  and  pooling  layers
-ordered according to --architecture parameter.
-Example of --architecture:
---architecture conv pool conv pool conv pool fc fc fc
-Example of --strides:
---strides 1 20 1 20 1 10
-Being 1 1 1 the strides of convolution layers
-and 20 20 20 the strides of pooling layers"""
+		help = 	"""Strides  of  convolution  and  pooling  layers
+				ordered according to --architecture parameter.
+				Example of architecture:
+				--architecture conv pool conv pool conv pool fc fc fc
+				Example of strides:
+				--strides 1 20 1 20 1 10
+				Being 1 1 1 the strides of convolution layers
+				and 20 20 20 the strides of pooling layers"""
 	)
 
 	parser.add_argument(
 		'-fm','--feature-maps',
 		dest = 'feature_maps',
+		metavar = 'NUMBER_OF_FILTERS',
 		type = int,
 		nargs = '+',
 		default = [64, 32, 16],
 		required = False,
-		help = """Number of feature maps per  convolution  layer,
-separated by spaces.
-Example of --architecture:
---architecture conv pool conv pool conv pool fc fc fc
-Example of --feature-maps:
---feature-maps 64 32 16"""
+		help = 	"""Number of feature maps per  convolution  layer,
+				separated by spaces.
+				Example of architecture:
+				--architecture conv pool conv pool conv pool fc fc fc
+				Example of feature-maps:
+				--feature-maps 64 32 16"""
 	)
 
 	parser.add_argument(
@@ -143,7 +147,7 @@ Example of --feature-maps:
 		dest = 'epochs',
 		type = int,
 		nargs = 1,
-		default = [30],
+		default = [10],
 		required = False,
 		help = """Number of epochs"""
 	)
@@ -179,7 +183,7 @@ Example of --feature-maps:
 	if not (options.number_of_layers[0] == len(options.architecture)):
 		print('ERROR\n\nNumber of layers is not equal to the number of layers defined on --architecture parameter'+HELP_MSG)
 		exit(3)
-	if not (options.number_of_layers[0] == len(options.functions)):
+	if not (options.number_of_layers[0] == len(options.activation_functions)):
 		print('ERROR\n\nNumber of functions is not equal to the number of layers defined on --architecture parameter'+HELP_MSG)
 		exit(4)
 	if not (options.number_of_layers[0] == len(options.widths)):
@@ -203,7 +207,7 @@ def print_options(options):
 	print('%20s %-25d' % ('Number of layers:',options.number_of_layers[0]))
 	print('%20s %-25s' % ('Prefix:',options.prefix[0]))
 	print('%20s %-50s' % ('Architecture:',''.join('%-7s' % t for t in zip(options.architecture))))
-	print('%20s %-50s' % ('Functions:',''.join('%-7s' % t for t in zip(options.functions))))
+	print('%20s %-50s' % ('Functions:',''.join('%-7s' % t for t in zip(options.activation_functions))))
 	print('%20s %-50s' % ('Widths:',''.join('%-7s' % t for t in zip(options.widths))))
 	print('%20s %-50s' % ('Strides:',''.join('%-7s' % t for t in zip(options.widths))))
 	feature_maps_string = '%20s ' % 'Feature maps:'
