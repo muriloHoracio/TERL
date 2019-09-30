@@ -19,7 +19,7 @@ def get_options(arguments):
 				must be named according  to  the  correspondent
 				class"""
 	)
-
+	
 	parser.add_argument(
 		'-l', '--layers',
 		dest = 'number_of_layers',
@@ -121,7 +121,7 @@ def get_options(arguments):
 				Example of feature-maps:
 				--feature-maps 64 32 16"""
 	)
-
+	
 	parser.add_argument(
 		'-trb', '--train-batch-size',
 		dest = 'train_batch_size',
@@ -141,7 +141,7 @@ def get_options(arguments):
 		required = False,
 		help = """Test batch size"""
 	)
-
+	
 	parser.add_argument(
 		'-e','--epochs',
 		dest = 'epochs',
@@ -163,6 +163,16 @@ def get_options(arguments):
 	)
 
 	parser.add_argument(
+		'-gt', '--graph-title',
+		dest = 'graph_title',
+		type = str,
+		nargs = '+',
+		default = ['Confusion Matrix'],
+		required = False,
+		help = """Title of the graph that will be generated containing the confusion matrix of test set classification"""
+	)
+
+	parser.add_argument(
 		'-p','--prefix',
 		dest = 'prefix',
 		type = str,
@@ -172,40 +182,73 @@ def get_options(arguments):
 		help = """Prefix of the file names to be created"""
 	)
 
+	parser.add_argument(
+		'-md', '--model-export-dir',
+		dest = 'model_export_dir',
+		type = str,
+		nargs = 1,
+		default = ['Models/Model_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')],
+		required = False,
+		help = """Folder in which the trained model will be stored 
+		to be used as a classifier by the cnn_test.py program. If 
+		the folder already exists the user will be prompted to overwrite
+		the current existing folder with the trained model or to enter
+		a new folder to store the model."""
+	)
+
 	options =  parser.parse_args(arguments)
 
-	if not os.path.isdir(options.root[0] + '/Train'):
-		print('ERROR\n\nPath: '+options.root[0]+'/Train does not exist'+HELP_MSG)
-		exit(1)
-	if not os.path.isdir(options.root[0] + '/Test'):
-		print('ERROR\n\nPath: '+options.root[0]+'/Test does not exist'+HELP_MSG)
-		exit(2)
-	if not (options.number_of_layers[0] == len(options.architecture)):
+	options.root = options.root[0]
+	if options.root[-1] == '/':
+		options.root = options.root[0:-1]
+	options.number_of_layers = options.number_of_layers[0]
+	options.train_batch_size = options.train_batch_size[0]
+	options.test_batch_size = options.test_batch_size[0]
+	options.epochs = options.epochs[0]
+	options.dropout = options.dropout[0]
+	options.graph_title = ' '.join(options.graph_title)
+	options.prefix = options.prefix[0]
+	options.model_export_dir = options.model_export_dir[0]
+
+	if not os.path.isdir(options.root + '/Train'):
+		print('ERROR\n\nPath: '+options.root+'/Train does not exist'+HELP_MSG)
+		exit(-1)
+	if not os.path.isdir(options.root + '/Test'):
+		print('ERROR\n\nPath: '+options.root+'/Test does not exist'+HELP_MSG)
+		exit(-2)
+	if not (options.number_of_layers == len(options.architecture)):
 		print('ERROR\n\nNumber of layers is not equal to the number of layers defined on --architecture parameter'+HELP_MSG)
-		exit(3)
-	if not (options.number_of_layers[0] == len(options.activation_functions)):
+		exit(-3)
+	if not (options.number_of_layers == len(options.activation_functions)):
 		print('ERROR\n\nNumber of functions is not equal to the number of layers defined on --architecture parameter'+HELP_MSG)
-		exit(4)
-	if not (options.number_of_layers[0] == len(options.widths)):
+		exit(-4)
+	if not (options.number_of_layers == len(options.widths)):
 		print('ERROR\n\nNumber of widths is not equal to the number of layers defined on --architecture parameter'+HELP_MSG)
-		exit(5)
+		exit(-5)
 	if not (len([a for a in options.architecture if a=='conv']) == len(options.feature_maps)):
 		print('ERROR\n\nNumber of feature maps is not equal to the number of convolution layers defined on --architecture parameter'+HELP_MSG)
-		exit(6)
+		exit(-6)
 	if not (len([a for a in options.architecture if a=='conv' or a=='pool']) == len(options.strides)):
 		print('ERROR\n\nNumber of strides is not equal to the amount of convolution and pooling layers defined on --architecture parameter'+HELP_MSG)
-		exit(7)
+		exit(-7)
+	if os.path.isdir(options.model_export_dir):
+		old_export_dir = options.model_export_dir
+		options.model_export_dir = 'Models/Model_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+		print('WARNING\n\nThe informed folder to export the model ('+old_export_dir+') already exists.\nThe model will be saved on folder: '+options.model_export_dir)
+		
 	return options
 
 def print_options(options):
 	print('*' * 79 + '\n**' + ' ' * 33 + ' OPTIONS ' + ' ' * 33 + '**\n' + '*' * 79)
-	print('%20s %s' % ('Root:',options.root[0]))
-	print('%20s %d' % ('Train batch:',options.train_batch_size[0]))
-	print('%20s %d' % ('Test batch:',options.test_batch_size[0]))
-	print('%20s %d' % ('Epochs:',options.epochs[0]))
-	print('%20s %f' % ('Dropout:',options.dropout[0]))
-	print('%20s %d' % ('Number of layers:',options.number_of_layers[0]))
-	print('%20s %s' % ('Prefix:',options.prefix[0]))
+	print('%20s %s' % ('Root:',options.root))
+	print('%20s %d' % ('Train batch:',options.train_batch_size))
+	print('%20s %d' % ('Test batch:',options.test_batch_size))
+	print('%20s %d' % ('Epochs:',options.epochs))
+	print('%20s %.2f' % ('Dropout:',options.dropout))
+	print('%20s %d' % ('Number of layers:',options.number_of_layers))
+	print('%20s %s' % ('Graph Title:',options.graph_title))
+	print('%20s %s' % ('Prefix:',options.prefix))
+	print('%20s %s' % ('Model export dir:',options.model_export_dir))
 	print('%20s %s' % ('Architecture:',''.join('%-8s' % t for t in options.architecture)))
 	print('%20s %s' % ('Functions:',''.join('%-8s' % t for t in options.activation_functions)))
 	print('%20s %s' % ('Widths:',''.join('%-8s' % t for t in options.widths)))

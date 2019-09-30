@@ -27,8 +27,8 @@ def get_files(root):
 
 def print_files(root):
 	print('*' * 79 + '\n**' + ' ' * 34 + ' FILES ' + ' ' * 34 + '**\n' + '*' * 79)
-	print('Train'+''.join('\n\t%s' % t for t in os.listdir(options.root[0]+'/Train')))
-	print('Test'+''.join('\n\t%s' % t for t in os.listdir(options.root[0]+'/Test')))
+	print('Train'+''.join('\n\t%s' % t for t in os.listdir(options.root+'/Train')))
+	print('Test'+''.join('\n\t%s' % t for t in os.listdir(options.root+'/Test')))
 
 def print_data_info(db):
 	print('*' * 79 + '\n**' + ' ' * 32 + ' DATA INFO ' + ' ' * 32 + '**\n' + '*' * 79)
@@ -47,6 +47,7 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 		with sess.as_default():
 			cnn = CNN_model(
 				num_classes,
+				classes,
 				architecture,
 				activation_functions,
 				widths,
@@ -61,16 +62,15 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 			grads_and_vars = optimizer.compute_gradients(cnn.loss)
 			train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
 
-			pre_x = tf.placeholder(tf.uint8,[None, max_len])
-			pre_y = tf.placeholder(tf.uint8,[None])
-			one_hot_x = tf.one_hot(pre_x, vocab_size, dtype=tf.float32)
-			one_hot_y = tf.one_hot(pre_y, num_classes, dtype=tf.float32)
+			pre_x = tf.placeholder(tf.uint8,[None, max_len], name='pre_x')
+			pre_y = tf.placeholder(tf.uint8,[None], name='pre_y')
+			one_hot_x = tf.one_hot(pre_x, vocab_size, dtype=tf.float32, name='one_hot_x')
+			one_hot_y = tf.one_hot(pre_y, num_classes, dtype=tf.float32, name='one_hot_y')
 
 			accuracies = []
 			training_time = 0
 			test_times = []
 			best_result = [0, []]
-			saver = tf.train.Saver(tf.global_variables())
 			sess.run([tf.global_variables_initializer(),tf.local_variables_initializer()])
 
 			def train_step(x_batch, y_batch):
@@ -124,16 +124,21 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 				time_str = datetime.datetime.now().isoformat()
 				print(time_str+': '+str(accuracies[-1]))
 			training_time = time.time() - training_time
-			saver.save(sess, output_file)
-
+			tf.saved_model.simple_save(
+				sess,
+				options.model_export_dir,
+				inputs={'x_input': cnn.x_input},
+				outputs={'prediction': cnn.layers['pred']}
+			)
+			#saver.save(sess, output_file)
 			#TEST
 			test_times.append(time.time())
 			predictions = evaluate(epoch, test_length, test_batch_size, x_test, y_test)
 			test_times[-1] = time.time() - test_times[-1]
 	return y_test, np.array(predictions, dtype=np.uint8), accuracies, best_result, training_time, test_times
 
-train_files, test_files = get_files(options.root[0])
-print_files(options.root[0])
+train_files, test_files = get_files(options.root)
+print_files(options.root)
 
 db = dh.DataHandler(train_files, test_files)
 print_data_info(db)
@@ -160,18 +165,17 @@ labels, predictions, accuracies, best_result, training_time, test_times = train_
 	options.widths,
 	options.strides,
 	options.feature_maps,
-	options.train_batch_size[0],
-	options.test_batch_size[0],
-	options.epochs[0],
-	options.dropout[0]
+	options.train_batch_size,
+	options.test_batch_size,
+	options.epochs,
+	options.dropout
 )
 
-m = metrics.Metric(labels, best_result[1], classes=db.classes, filename_prefix=options.prefix[0])
+m = metrics.Metric(labels, best_result[1], classes=db.classes, filename_prefix=options.prefix)
 m.print_report()
 m.save_report()
 
-m.save_confusion_matrix(title='CNN classifying '+options.root[0])
-m.save_learning_curve(accuracies, acc=0)
+m.save_confusion_matrix(title=options.graph_title)
+m.save_learning_curve(accuracies, 'Learning Curve - '+str(options.root.split('/')[-1]), acc_type=0)
 
 print('\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times)))
-

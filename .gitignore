@@ -1,0 +1,5 @@
+*.pyc
+Models
+Outputs
+Datasets
+__pycache__

@@ -13,14 +13,23 @@ def calculate_flatten_shape(architecture, widths, feature_maps, max_len):
 
  
 class CNN_model(object):
-	def __init__(self, num_classes, architecture, activation_functions, widths, strides, feature_maps, vocab_size, max_len, l2_reg_lambda=0.0):
+	def __init__(self, num_classes, classes, architecture, activation_functions, widths, strides, feature_maps, vocab_size, max_len, l2_reg_lambda=0.0):
 		#initializes weights and biases
 		architecture.append('pred')
 		activation_functions.append('pred')
-
 		flatten_shape = calculate_flatten_shape(architecture, widths, feature_maps, max_len)
 
-		#the x_input will have a size of max_len
+		#instatiate constants
+		tf.constant(num_classes, name='num_classes')
+		tf.constant(classes, name='classes')
+		tf.constant(architecture, name='architecture')
+		tf.constant(activation_functions, name='activation_functions')
+		tf.constant(widths, name='widths')
+		tf.constant(strides, name='strides')
+		tf.constant(feature_maps, name='feature_maps')
+		tf.constant(vocab_size, name='vocab_size')
+		tf.constant(max_len, name='max_len')
+		
 		self.x_input = tf.placeholder(tf.float32, [None, max_len, vocab_size, 1], name="x_input")
 		self.y_input = tf.placeholder(tf.float32, [None, num_classes], name="y_input")
 		self.dropout = tf.placeholder(tf.float32, name="dropout")
@@ -113,7 +122,7 @@ class CNN_model(object):
 				fc_counter += 1
 			elif layer == 'pred':
 				layers['scores'] = tf.matmul(prev_layer, self.W['pred']) + self.B['pred']
-				layers['pred'] = tf.argmax(layers['scores'], 1)
+				layers['pred'] = tf.argmax(layers['scores'], 1, name='prediction')
 		return layers
 	def print_layers_shape(self):
 		print('*' * 79 + '\n**' + ' ' * 32 + ' RUN  INFO ' + ' ' * 32 + '**\n' + '*' * 79)

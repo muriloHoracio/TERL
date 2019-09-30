@@ -84,6 +84,7 @@ class Metric:
         tick_marks = np.arange(len(self.classes))
         plt.xticks(tick_marks, self.classes, rotation=45)
         plt.yticks(tick_marks, self.classes)
+        plt.ylim(len(self.classes)-0.5, -0.5) 
 
         fmt = '.2f' if normalize else 'd'
         thresh = cm.max()/2.
@@ -136,7 +137,8 @@ class Metric:
         plt.clf()
         plt.close('all')
 
-    def save_learning_curve(self,accuracies,acc=0):
+    def save_learning_curve(self,accuracies,title,acc_type=0):
+        acc_type_axis_titles = ['Accuracy(micro)','Accuracy(macro)','Accuracy']
         plt.figure()
         if(acc==0):
             plt.plot([e[0] for e in accuracies],[e[1] for e in accuracies])
@@ -144,6 +146,9 @@ class Metric:
             plt.plot([e[0] for e in accuracies],[e[2] for e in accuracies])
         elif(acc==2):
             plt.plot([e[0] for e in accuracies],[e[3] for e in accuracies])
+        plt.title(title)
+        plt.xlabel('Epochs')
+        plt.ylabel(acc_type_axis_titles[acc_type])
         plt.savefig(self.output_dir+'/LC_'+self.filename_prefix+'_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')+'.png')
         plt.clf()
         plt.close('all')
