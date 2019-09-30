@@ -239,20 +239,6 @@ def get_options(arguments):
 	return options
 
 def print_options(options):
-	print('*' * 79 + '\n**' + ' ' * 33 + ' OPTIONS ' + ' ' * 33 + '**\n' + '*' * 79)
-	print('%20s %s' % ('Root:',options.root))
-	print('%20s %d' % ('Train batch:',options.train_batch_size))
-	print('%20s %d' % ('Test batch:',options.test_batch_size))
-	print('%20s %d' % ('Epochs:',options.epochs))
-	print('%20s %.2f' % ('Dropout:',options.dropout))
-	print('%20s %d' % ('Number of layers:',options.number_of_layers))
-	print('%20s %s' % ('Graph Title:',options.graph_title))
-	print('%20s %s' % ('Prefix:',options.prefix))
-	print('%20s %s' % ('Model export dir:',options.model_export_dir))
-	print('%20s %s' % ('Architecture:',''.join('%-8s' % t for t in options.architecture)))
-	print('%20s %s' % ('Functions:',''.join('%-8s' % t for t in options.activation_functions)))
-	print('%20s %s' % ('Widths:',''.join('%-8s' % t for t in options.widths)))
-	print('%20s %s' % ('Strides:',''.join('%-8s' % t for t in options.strides)))
 	feature_maps_string = '%20s ' % 'Feature maps:'
 	j = 0
 	for i in range(len(options.architecture)):
@@ -261,4 +247,20 @@ def print_options(options):
 			j += 1
 		else:
 			feature_maps_string += '%-8s' % '-'
-	print(feature_maps_string)
+	out = '*' * 79 + '\n**' + ' ' * 33 + ' OPTIONS ' + ' ' * 33 + '**\n' + '*' * 79 + '\n'
+	out += '%20s %s\n' % ('Root:',options.root)
+	out += '%20s %d\n' % ('Train batch:',options.train_batch_size)
+	out += '%20s %d\n' % ('Test batch:',options.test_batch_size)
+	out += '%20s %d\n' % ('Epochs:',options.epochs)
+	out += '%20s %.2f\n' % ('Dropout:',options.dropout)
+	out += '%20s %d\n' % ('Number of layers:',options.number_of_layers)
+	out += '%20s %s\n' % ('Graph Title:',options.graph_title)
+	out += '%20s %s\n' % ('Prefix:',options.prefix)
+	out += '%20s %s\n' % ('Model export dir:',options.model_export_dir)
+	out += '%20s %s\n' % ('Architecture:',''.join('%-8s' % t for t in options.architecture))
+	out += '%20s %s\n' % ('Functions:',''.join('%-8s' % t for t in options.activation_functions))
+	out += '%20s %s\n' % ('Widths:',''.join('%-8s' % t for t in options.widths))
+	out += '%20s %s\n' % ('Strides:',''.join('%-8s' % t for t in options.strides))
+	out += feature_maps_string + '\n'
+	print(out)
+	return out

@@ -48,17 +48,18 @@ class Metric:
         self.fscore_M = (self.f_beta**2 + 1.0)*self.precision_M*self.recall_M/((self.f_beta**2)*self.precision_M + self.recall_M + 0.000000001)
         self.fscore_m = (self.f_beta**2 + 1.0)*self.precision_m*self.recall_m/((self.f_beta**2)*self.precision_m + self.recall_m + 0.000000001)
 
-    def print_report(self, message='Report'):
-        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n%60s\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" % (message)) 
-        print('Confusion Matrix (row = true, column = predicted):')
-        print(str(self.cm))
-        print('\nStatistics:')
-        print("%10s %10s %10s %10s %10s %10s" % ('Classes','Accuracy','Error','Precision','Recall','F1-score'))
+    def get_report(self):
+        out = '*' * 79 + '\n**' + ' ' * 26 + ' CLASSIFICATION REPORT ' + ' ' * 26 + '**\n' + '*' * 79 + '\n'
+        out += 'Confusion Matrix (row = true, column = predicted):\n'
+        out += str(self.cm) + '\n'
+        out += '\nStatistics:\n'
+        out += "%10s %10s %10s %10s %10s %10s\n" % ('Classes','Accuracy','Error','Precision','Recall','F1-score')
         for i in range(self.n):
-            print("%10s %10.3f %10.3f %10.3f %10.3f %10.3f" % (self.classes[i],self.accuracies[i],self.error_rates[i], self.precisions[i], self.recalls[i], self.fscores[i]))
-        print("\n%10s %10.3f %10.3f %10.3f %10.3f %10.3f" % ('Macro mean',self.accuracy_m,self.error_rate_M,self.precision_M,self.recall_M,self.fscore_M))
-        print("%10s %10.3f %10.3f %10.3f %10.3f %10.3f" % ('Micro mean',self.accuracy_m,self.error_rate_m,self.precision_m,self.recall_m,self.fscore_m))
-        print("%10s %10.3f" % ('Accuracy*',self.accuracy))
+            out += "%10s %10.3f %10.3f %10.3f %10.3f %10.3f\n" % (self.classes[i],self.accuracies[i],self.error_rates[i], self.precisions[i], self.recalls[i], self.fscores[i])
+        out += "\n%10s %10.3f %10.3f %10.3f %10.3f %10.3f\n" % ('Macro mean',self.accuracy_m,self.error_rate_M,self.precision_M,self.recall_M,self.fscore_M)
+        out += "%10s %10.3f %10.3f %10.3f %10.3f %10.3f\n" % ('Micro mean',self.accuracy_m,self.error_rate_m,self.precision_m,self.recall_m,self.fscore_m)
+        out += "%10s %10.3f\n" % ('Accuracy*',self.accuracy)
+        return out
 
     def save_report(self, message='Report'):
         out = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n%60s\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n" % (message)
@@ -110,6 +111,7 @@ class Metric:
         tick_marks = np.arange(len(self.classes))
         plt.xticks(tick_marks, self.classes, rotation=45)
         plt.yticks(tick_marks, self.classes)
+        plt.ylim(len(self.classes)-0.55, -0.55) 
 
         fmt = '.2f' if normalize else 'd'
         thresh = cm.max()/2.
@@ -140,11 +142,11 @@ class Metric:
     def save_learning_curve(self,accuracies,title,acc_type=0):
         acc_type_axis_titles = ['Accuracy(micro)','Accuracy(macro)','Accuracy']
         plt.figure()
-        if(acc==0):
+        if(acc_type==0):
             plt.plot([e[0] for e in accuracies],[e[1] for e in accuracies])
-        elif(acc==1):
+        elif(acc_type==1):
             plt.plot([e[0] for e in accuracies],[e[2] for e in accuracies])
-        elif(acc==2):
+        elif(acc_type==2):
             plt.plot([e[0] for e in accuracies],[e[3] for e in accuracies])
         plt.title(title)
         plt.xlabel('Epochs')

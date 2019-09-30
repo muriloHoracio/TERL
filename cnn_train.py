@@ -3,7 +3,7 @@ from parser import get_options
 from parser import print_options
 
 options = get_options(sys.argv[1:])
-print_options(options)
+report_out = print_options(options)
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -26,19 +26,24 @@ def get_files(root):
 	return train_files, test_files
 
 def print_files(root):
-	print('*' * 79 + '\n**' + ' ' * 34 + ' FILES ' + ' ' * 34 + '**\n' + '*' * 79)
-	print('Train'+''.join('\n\t%s' % t for t in os.listdir(options.root+'/Train')))
-	print('Test'+''.join('\n\t%s' % t for t in os.listdir(options.root+'/Test')))
+	out = '*' * 79 + '\n**' + ' ' * 34 + ' FILES ' + ' ' * 34 + '**\n' + '*' * 79 + '\n'
+	out += 'Train'+''.join('\n\t%s' % t for t in os.listdir(options.root+'/Train')) + '\n'
+	out += 'Test'+''.join('\n\t%s' % t for t in os.listdir(options.root+'/Test')) + '\n'
+	print(out)
+	return out
 
 def print_data_info(db):
-	print('*' * 79 + '\n**' + ' ' * 32 + ' DATA INFO ' + ' ' * 32 + '**\n' + '*' * 79)
-	print('%20s %-50s' % ('Classes:',', '.join(db.classes)))
-	print("%20s %-50d" % ("Train size:", db.train_size))
-	print("%20s %-50d" % ("Test size:", db.test_size))
-	print("%20s %-50d" % ("Longest sequence:", db.max_len))
-	print("%20s %-50d" % ("Vocabulary size:", db.vocab_size))
+	out = '*' * 79 + '\n**' + ' ' * 27 + ' CLASSIFICATION INFO ' + ' ' * 27 + '**\n' + '*' * 79 + '\n'
+	out += "%20s %s\n" % ('Classes:',', '.join(db.classes))
+	out += "%20s %d\n" % ("Train size:", db.train_size)
+	out += "%20s %d\n" % ("Test size:", db.test_size)
+	out += "%20s %d\n" % ("Longest sequence:", db.max_len)
+	out += "%20s %d\n" % ("Vocabulary size:", db.vocab_size)
+	print(out)
+	return out
 
 def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classes, num_classes, architecture, activation_functions, widths, strides, feature_maps, train_batch_size, test_batch_size, epochs, dropout=0.5, output_file='Models/'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')):
+	out = ''
 	train_length = len(y_train)
 	test_length = len(y_test)
 	with tf.Graph().as_default():
@@ -122,6 +127,7 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 				test_times[-1] = time.time() - test_times[-1]
 				if accuracies[-1][1] > best_result[0]: best_result = [accuracies[-1][1], np.copy(predictions)]
 				time_str = datetime.datetime.now().isoformat()
+				out += time_str+': '+str(accuracies[-1]) + '\n'
 				print(time_str+': '+str(accuracies[-1]))
 			training_time = time.time() - training_time
 			tf.saved_model.simple_save(
@@ -135,13 +141,13 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 			test_times.append(time.time())
 			predictions = evaluate(epoch, test_length, test_batch_size, x_test, y_test)
 			test_times[-1] = time.time() - test_times[-1]
-	return y_test, np.array(predictions, dtype=np.uint8), accuracies, best_result, training_time, test_times
+	return y_test, np.array(predictions, dtype=np.uint8), accuracies, best_result, training_time, test_times, out
 
 train_files, test_files = get_files(options.root)
-print_files(options.root)
+report_out += print_files(options.root)
 
 db = dh.DataHandler(train_files, test_files)
-print_data_info(db)
+report_out += print_data_info(db)
 
 shuffled = np.random.permutation(range(db.train_size))
 db.x_train = db.x_train[shuffled]
@@ -151,7 +157,7 @@ shuffled = np.random.permutation(range(db.test_size))
 db.x_test = db.x_test[shuffled]
 db.y_test = db.y_test[shuffled]
 
-labels, predictions, accuracies, best_result, training_time, test_times = train_evaluate(
+labels, predictions, accuracies, best_result, training_time, test_times, training_out = train_evaluate(
 	db.x_train,
 	db.y_train,
 	db.x_test,
@@ -171,11 +177,17 @@ labels, predictions, accuracies, best_result, training_time, test_times = train_
 	options.dropout
 )
 
+report_out += training_out
+
 m = metrics.Metric(labels, best_result[1], classes=db.classes, filename_prefix=options.prefix)
-m.print_report()
-m.save_report()
+classification_report = m.get_report()
+print(classification_report)
+report_out += classification_report
 
 m.save_confusion_matrix(title=options.graph_title)
 m.save_learning_curve(accuracies, 'Learning Curve - '+str(options.root.split('/')[-1]), acc_type=0)
 
 print('\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times)))
+report_out += '\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times))
+with open('Outputs/Report_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')+'.txt', 'w+') as f:
+	f.write(report_out)
