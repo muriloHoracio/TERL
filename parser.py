@@ -25,7 +25,7 @@ def get_options(arguments):
 		dest = 'number_of_layers',
 		type = int,
 		nargs = 1,
-		default = [8],
+		default = [-1],
 		required = False,
 		help = 	"""Number of layers, not including the classification
 				layer"""
@@ -51,7 +51,7 @@ def get_options(arguments):
 
 	parser.add_argument(
 		'-f', '--functions',
-		dest = 'activation_functions',
+		dest = 'functions',
 		metavar = 'FUNCTION',
 		type = str,
 		nargs = '+',
@@ -298,13 +298,13 @@ def get_options(arguments):
 	if not os.path.isdir(options.root + '/Test'):
 		print('ERROR\n\nPath: '+options.root+'/Test does not exist'+HELP_MSG)
 		exit(-2)
-	if not (options.number_of_layers == len(options.architecture)):
+	if options.number_of_layers > 0 and not (options.number_of_layers == len(options.architecture)):
 		print('ERROR\n\nNumber of layers is not equal to the number of layers defined on --architecture parameter'+HELP_MSG)
 		exit(-3)
-	if not (options.number_of_layers == len(options.activation_functions)):
+	if options.number_of_layers > 0 and not (options.number_of_layers == len(options.functions)):
 		print('ERROR\n\nNumber of functions is not equal to the number of layers defined on --architecture parameter'+HELP_MSG)
 		exit(-4)
-	if not (options.number_of_layers == len(options.widths)):
+	if options.number_of_layers > 0 and not (options.number_of_layers == len(options.widths)):
 		print('ERROR\n\nNumber of widths is not equal to the number of layers defined on --architecture parameter'+HELP_MSG)
 		exit(-5)
 	if not (len([a for a in options.architecture if a=='conv']) == len(options.feature_maps)):
@@ -318,16 +318,18 @@ def get_options(arguments):
 		exit(-8)
 	for l in options.architecture:
 		if l.upper() not in ['CONV','POOL','FC']:
-			print('ERROR\n\nArchitecture parameter "'l+'" is not a valid layer type option!\nAvailable layer types are: conv, pool, fc\nPlease choose one of the above layer types'+HELP_MSG)
+			print('ERROR\n\nArchitecture parameter "'+l+'" is not a valid layer type option!\nAvailable layer types are: conv, pool, fc\nPlease choose one of the above layer types'+HELP_MSG)
 			exit(-9)
 	for func in options.functions:
 		if func.upper() not in ['RELU','TANH','SIGMOID','LEAKY_RELU','ELU','AVG','MAX']:
-			print('ERROR\n\nFunctions parameter "'func+'" is not a valid function option!\nAvailable functions are: relu, tanh, sigmoid, leaky_relu, elu, avg and max\nPlease choose one of the above layer types'+HELP_MSG)
+			print('ERROR\n\nFunctions parameter "'+func+'" is not a valid function option!\nAvailable functions are: relu, tanh, sigmoid, leaky_relu, elu, avg and max\nPlease choose one of the above layer types'+HELP_MSG)
 			exit(-10)
 	if os.path.isdir(options.model_export_dir):
 		old_export_dir = options.model_export_dir
 		options.model_export_dir = 'Models/Model_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 		print('WARNING\n\nThe informed folder to export the model ('+old_export_dir+') already exists.\nThe model will be saved on folder: '+options.model_export_dir)
+
+	options.number_of_layers = len(options.architecture)
 		
 	return options
 
@@ -372,7 +374,7 @@ def print_options(options):
 		out += '%20s %s\n' % ('Prefix:',options.prefix)
 
 	out += '%20s %s\n' % ('Architecture:',''.join('%-8s' % t for t in options.architecture))
-	out += '%20s %s\n' % ('Functions:',''.join('%-8s' % t for t in options.activation_functions))
+	out += '%20s %s\n' % ('Functions:',''.join('%-8s' % t for t in options.functions))
 	out += '%20s %s\n' % ('Widths:',''.join('%-8s' % t for t in options.widths))
 	out += '%20s %s\n' % ('Strides:',''.join('%-8s' % t for t in options.strides))
 	out += feature_maps_string + '\n'

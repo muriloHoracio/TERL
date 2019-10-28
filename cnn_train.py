@@ -56,7 +56,7 @@ def print_data_info(db):
 	if options.verbose: print(out)
 	return out
 
-def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classes, num_classes, architecture, activation_functions, widths, strides, feature_maps, optimizer, train_batch_size, test_batch_size, epochs, dropout=0.5, output_file='Models/'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')):
+def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classes, num_classes, architecture, functions, widths, strides, feature_maps, optimizer, train_batch_size, test_batch_size, epochs, dropout=0.5, output_file='Models/'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')):
 	out = ''
 	train_length = len(y_train)
 	test_length = len(y_test)
@@ -68,7 +68,7 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 				num_classes,
 				classes,
 				architecture,
-				activation_functions,
+				functions,
 				widths,
 				strides,
 				feature_maps,
@@ -180,7 +180,7 @@ labels, predictions, accuracies, best_result, training_time, test_times, trainin
 	db.classes,
 	db.num_classes,
 	options.architecture,
-	options.activation_functions,
+	options.functions,
 	options.widths,
 	options.strides,
 	options.feature_maps,

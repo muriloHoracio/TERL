@@ -13,17 +13,17 @@ def calculate_flatten_shape(architecture, widths, feature_maps, max_len):
 
  
 class CNN_model(object):
-	def __init__(self, num_classes, classes, architecture, activation_functions, widths, strides, feature_maps, vocab_size, max_len, l2_reg_lambda=0.0):
+	def __init__(self, num_classes, classes, architecture, functions, widths, strides, feature_maps, vocab_size, max_len, l2_reg_lambda=0.0):
 		#initializes weights and biases
 		architecture.append('pred')
-		activation_functions.append('pred')
+		functions.append('pred')
 		flatten_shape = calculate_flatten_shape(architecture, widths, feature_maps, max_len)
 
 		#instatiate constants
 		tf.constant(num_classes, name='num_classes')
 		tf.constant(classes, name='classes')
 		tf.constant(architecture, name='architecture')
-		tf.constant(activation_functions, name='activation_functions')
+		tf.constant(functions, name='functions')
 		tf.constant(widths, name='widths')
 		tf.constant(strides, name='strides')
 		tf.constant(feature_maps, name='feature_maps')
@@ -35,7 +35,7 @@ class CNN_model(object):
 		self.dropout = tf.placeholder(tf.float32, name="dropout")
 
 		self.W, self.B = self.create_learnable_params(architecture, widths, feature_maps, vocab_size, num_classes, flatten_shape)
-		self.layers = self.create_layers(architecture, widths, strides, activation_functions, flatten_shape)
+		self.layers = self.create_layers(architecture, widths, strides, functions, flatten_shape)
 
 		#losses
 		loss_sum = 0
@@ -72,52 +72,52 @@ class CNN_model(object):
 				W['pred'] = tf.Variable(tf.truncated_normal([widths[i - 1], num_classes], stddev=0.1))
 				B['pred'] = tf.Variable(tf.truncated_normal([num_classes], stddev=0.1))
 		return W, B
-	def create_layers(self, architectures, widths, strides, activation_functions, flatten_shape):
+	def create_layers(self, architectures, widths, strides, functions, flatten_shape):
 		layers = dict()
 		fc_counter = 0
 		prev_layer = self.x_input
 		for i, layer in enumerate(architectures):
 			if layer == 'conv':
 				layers['conv' + str(i)] = tf.nn.conv2d(prev_layer, self.W['conv' + str(i)], strides=[strides[i], 1, 1, 1], padding='SAME' if i != 0 else 'VALID')
-				if activation_functions[i] == 'relu':
+				if functions[i] == 'relu':
 					layers['relu' + str(i)] = tf.nn.relu(tf.nn.bias_add(layers['conv' + str(i)], self.B['conv' + str(i)]))
 					prev_layer = layers['relu' + str(i)]
-				elif activation_functions[i] == 'tanh':
+				elif functions[i] == 'tanh':
 					layers['tanh' + str(i)] = tf.nn.tanh(tf.nn.bias_add(layers['conv' + str(i)], self.B['conv' + str(i)]))
 					prev_layer = layers['tanh' + str(i)]
-				elif activation_functions[i] == 'sigmoid':
+				elif functions[i] == 'sigmoid':
 					layers['sigmoid' + str(i)] = tf.nn.sigmoid(tf.nn.bias_add(layers['conv' + str(i)], self.B['conv' + str(i)]))
 					prev_layer = layers['sigmoid' + str(i)]
-				elif activation_functions[i] == 'leaky_relu':
+				elif functions[i] == 'leaky_relu':
 					layers['leaky_relu' + str(i)] = tf.nn.leaky_relu(tf.nn.bias_add(layers['conv' + str(i)], self.B['conv' + str(i)]))
 					prev_layer = layers['leaky_relu' + str(i)]
-				elif activation_functions[i] == 'elu':
+				elif functions[i] == 'elu':
 					layers['elu' + str(i)] = tf.nn.elu(tf.nn.bias_add(layers['conv' + str(i)], self.B['conv' + str(i)]))
 					prev_layer = layers['elu' + str(i)]
 				prev_layer = tf.nn.dropout(prev_layer,rate=self.dropout)
 			elif layer == 'pool':
-				if activation_functions[i] == 'avg':
+				if functions[i] == 'avg':
 					layers['pool' + str(i)] = tf.nn.avg_pool(prev_layer, ksize=[1, widths[i], 1, 1], strides=[1, strides[i], 1, 1], padding='SAME')
-				elif activation_functions[i] == 'max':
+				elif functions[i] == 'max':
 					layers['pool' + str(i)] = tf.nn.max_pool(prev_layer, ksize=[1, widths[i], 1, 1], strides=[1, strides[i], 1, 1], padding='SAME')
 				prev_layer = layers['pool' + str(i)]
 			elif layer == 'fc':
 				if fc_counter == 0:
 					layers['flatten'] = tf.reshape(prev_layer, [-1, flatten_shape])
 					prev_layer = layers['flatten']
-				if activation_functions[i] == 'relu':
+				if functions[i] == 'relu':
 					layers['relu' + str(i)] = tf.nn.relu(tf.matmul(prev_layer, self.W['fc' + str(i)]) + self.B['fc' + str(i)])
 					prev_layer = layers['relu' + str(i)]
-				elif activation_functions[i] == 'tanh':
+				elif functions[i] == 'tanh':
 					layers['tanh' + str(i)] = tf.nn.tanh(tf.matmul(prev_layer, self.W['fc' + str(i)]) + self.B['fc' + str(i)])
 					prev_layer = layers['tanh' + str(i)]
-				elif activation_functions[i] == 'sigmoid':
+				elif functions[i] == 'sigmoid':
 					layers['sigmoid' + str(i)] = tf.nn.sigmoid(tf.matmul(prev_layer, self.W['fc' + str(i)]) + self.B['fc' + str(i)])
 					prev_layer = layers['sigmoid' + str(i)]
-				elif activation_functions[i] == 'leaky_relu':
+				elif functions[i] == 'leaky_relu':
 					layers['leaky_relu' + str(i)] = tf.nn.leaky_relu(tf.matmul(prev_layer, self.W['fc' + str(i)]) + self.B['fc' + str(i)])
 					prev_layer = layers['leaky_relu' + str(i)]
-				elif activation_functions[i] == 'elu':
+				elif functions[i] == 'elu':
 					layers['elu' + str(i)] = tf.nn.elu(tf.matmul(prev_layer, self.W['fc' + str(i)]) + self.B['fc' + str(i)])
 					prev_layer = layers['elu' + str(i)]
 				prev_layer = tf.nn.dropout(prev_layer,rate=self.dropout)

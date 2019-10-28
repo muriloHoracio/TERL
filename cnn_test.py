@@ -79,12 +79,12 @@ classification = {
 	'Class II': ['Class II',0]
 }
 
-def print_model(architecture, activation_functions, widths, strides, feature_maps, max_len):
+def print_model(architecture, functions, widths, strides, feature_maps, max_len):
 	print('*' * 79 + '\n**' + ' ' * 34 + ' MODEL ' + ' ' * 34 + '**\n' + '*' * 79)
 	print('%20s %s' % ('Classes:',', '.join(t for t in classes)))
 	print('%20s %d' % ('Max length:',max_len))
 	print('%20s %s' % ('Architecture:',''.join('%-8s' % t for t in architecture)))
-	print('%20s %s' % ('Functions:',''.join('%-8s' % t for t in activation_functions)))
+	print('%20s %s' % ('Functions:',''.join('%-8s' % t for t in functions)))
 	print('%20s %s' % ('Widths:',''.join('%-8s' % t for t in widths)))
 	print('%20s %s' % ('Strides:',''.join('%-8s' % t for t in strides)))
 	feature_maps_string = '%20s ' % 'Feature maps:'
@@ -134,13 +134,13 @@ with tf.Session(graph=tf.Graph()) as sess:
 	num_classes = sess.run('num_classes:0')
 	classes = [c.decode('utf-8') for c in sess.run('classes:0')]
 	architecture = [layer.decode('utf-8') for layer in sess.run('architecture:0')]
-	activation_functions = [func.decode('utf-8') for func in sess.run('activation_functions:0')]
+	functions = [func.decode('utf-8') for func in sess.run('functions:0')]
 	widths = sess.run('widths:0')
 	strides = sess.run('strides:0')
 	feature_maps = sess.run('feature_maps:0')
 	vocab_size = sess.run('vocab_size:0')
 	max_len = sess.run('max_len:0')
-	print_model(architecture, activation_functions, widths, strides, feature_maps, max_len)
+	print_model(architecture, functions, widths, strides, feature_maps, max_len)
 
 	x = get_data(options.files, max_len)
 	test_size = len(x)
