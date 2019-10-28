@@ -32,7 +32,7 @@ def get_options(arguments):
 	)
 
 	parser.add_argument(
-		'-arc', '--architecture',
+		'-a', '--architecture',
 		dest = 'architecture',
 		metavar = 'LAYER',
 		type = str,
@@ -121,6 +121,33 @@ def get_options(arguments):
 				Example of feature-maps:
 				--feature-maps 64 32 16"""
 	)
+
+	parser.add_argument(
+		'-o','--optimizer',
+		dest = 'optimizer',
+		metavar = 'OPTIMIZER',
+		type = str,
+		nargs = 1,
+		default = ['adam'],
+		required = False,
+		help = 	"""Optimizer to be used to optimize the learnable
+				parameters. Optimizer can be: adam, adadelta, adagrad, ftrl, 
+				rmsprop, grad_desc. Default optimizer is adam. Each optimizer 
+				is documented on the tensorflow API's page under the optimizer 
+				section of tensorflow 1.x: www.tf.compat.v1.train"""
+	)
+
+	parser.add_argument(
+		'-lr','--learning-rate',
+		dest = 'learning_rate',
+		metavar = 'LEARNING_RATE',
+		type = float,
+		nargs = 1,
+		default = [0.001],
+		required = False,
+		help = 	"""Learning rate to be used by the optimizer. 
+				Default learning rate is 0.001"""
+	)
 	
 	parser.add_argument(
 		'-trb', '--train-batch-size',
@@ -169,7 +196,8 @@ def get_options(arguments):
 		nargs = '+',
 		default = ['Confusion Matrix'],
 		required = False,
-		help = """Title of the graph that will be generated containing the confusion matrix of test set classification"""
+		help = """Title of the graph that will be generated containing
+		the confusion matrix of test set classification"""
 	)
 
 	parser.add_argument(
@@ -196,6 +224,46 @@ def get_options(arguments):
 		a new folder to store the model."""
 	)
 
+	parser.add_argument(
+		'-sg', '--save-graph',
+		dest = 'save_graph',
+		const = True,
+		action = 'store_const',
+		default = False,
+		required = False,
+		help = """Sets the graphs to be saved on Outputs directory"""
+	)
+
+	parser.add_argument(
+		'-sm', '--save-model',
+		dest = 'save_model',
+		const = True,
+		action = 'store_const',
+		default = False,
+		required = False,
+		help = """Sets the model to be saved on --model-export-dir option"""
+	)
+
+	parser.add_argument(
+		'-sr', '--save-report',
+		dest = 'save_report',
+		const = True,
+		action = 'store_const',
+		default = False,
+		required = False,
+		help = """Sets the report to be saved on Outputs directory"""
+	)
+
+	parser.add_argument(
+		'-nv', '--no-verbose',
+		dest = 'verbose',
+		const = False,
+		action = 'store_const',
+		default = True,
+		required = False,
+		help = """Sets verbosity on"""
+	)
+
 	options =  parser.parse_args(arguments)
 
 	options.root = options.root[0]
@@ -206,6 +274,8 @@ def get_options(arguments):
 	options.test_batch_size = options.test_batch_size[0]
 	options.epochs = options.epochs[0]
 	options.dropout = options.dropout[0]
+	options.optimizer = options.optimizer[0].upper()
+	options.learning_rate = options.learning_rate[0]
 	options.graph_title = ' '.join(options.graph_title)
 	options.prefix = options.prefix[0]
 	options.model_export_dir = options.model_export_dir[0]
@@ -231,6 +301,9 @@ def get_options(arguments):
 	if not (len([a for a in options.architecture if a=='conv' or a=='pool']) == len(options.strides)):
 		print('ERROR\n\nNumber of strides is not equal to the amount of convolution and pooling layers defined on --architecture parameter'+HELP_MSG)
 		exit(-7)
+	if options.optimizer not in ['ADAM','ADADELTA','ADAGRAD','FTRL','RMSPROP','GRAD_DESC']:
+		print('ERROR\n\nOptimizer '+options.optimizer+' is not a valid optimizer option!\nAvailable optimizers are: adam, adadelta, adagrad, ftrl, rmsprop and grad_desc\nPlease choose one of the above optimizer to train your model'+HELP_MSG)
+		exit(-8)
 	if os.path.isdir(options.model_export_dir):
 		old_export_dir = options.model_export_dir
 		options.model_export_dir = 'Models/Model_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -254,13 +327,55 @@ def print_options(options):
 	out += '%20s %d\n' % ('Epochs:',options.epochs)
 	out += '%20s %.2f\n' % ('Dropout:',options.dropout)
 	out += '%20s %d\n' % ('Number of layers:',options.number_of_layers)
-	out += '%20s %s\n' % ('Graph Title:',options.graph_title)
-	out += '%20s %s\n' % ('Prefix:',options.prefix)
-	out += '%20s %s\n' % ('Model export dir:',options.model_export_dir)
+	out += '%20s %s\n' % ('Optimizer:',options.optimizer)
+	out += '%20s %f\n' % ('Learning rate:',options.learning_rate)
+
+	if options.save_graph:
+		out += '%20s\n' % ('Saving graph:')
+		out += '%20s %s\n' % ('Graph Title:',options.graph_title)
+	else:
+		out += '%20s\n' % ('Not saving graph:')
+
+	if options.save_report:
+		out += '%20s\n' % ('Saving report:')
+	else:
+		out += '%20s\n' % ('Not saving report:')
+
+	if options.save_model:
+		out += '%20s\n' % ('Saving model:')
+		out += '%20s %s\n' % ('Model export dir:',options.model_export_dir)
+	else:
+		out += '%20s\n' % ('Not saving model:')
+
+	if options.save_graph or options.save_report:
+		out += '%20s %s\n' % ('Prefix:',options.prefix)
+
 	out += '%20s %s\n' % ('Architecture:',''.join('%-8s' % t for t in options.architecture))
 	out += '%20s %s\n' % ('Functions:',''.join('%-8s' % t for t in options.activation_functions))
 	out += '%20s %s\n' % ('Widths:',''.join('%-8s' % t for t in options.widths))
 	out += '%20s %s\n' % ('Strides:',''.join('%-8s' % t for t in options.strides))
 	out += feature_maps_string + '\n'
-	print(out)
+	if options.verbose: print(out)
 	return out
+
+
+"""
+FLAG LIST:
+root: -r
+layers: -l
+architecture: -a
+functions: -f
+widths: -w
+strides: -s
+feature maps: -fm
+optimizer: -o
+learning_rate: -lr
+verbosity: -v
+train batch size: -trb
+test batch size: -tsb
+epochs: -e
+dropout: -d
+graph title: -gt
+prefix: -p
+model export dir: -md
+"""

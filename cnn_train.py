@@ -25,11 +25,25 @@ def get_files(root):
 	test_files = [root+'/Test/'+test_file for test_file in os.listdir(root+'/Test')]
 	return train_files, test_files
 
+def get_optimizer(optimizer_option, learning_rate):
+	if optimizer_option == 'ADAM':
+		return tf.train.AdamOptimizer(learning_rate=learning_rate)
+	elif optimizer_option == 'ADADELTA':
+		return tf.train.AdadeltaOptimizer(learning_rate=learning_rate)
+	elif optimizer_option == 'ADAGRAD':
+		return tf.train.AdagradOptimizer(learning_rate=learning_rate)
+	elif optimizer_option == 'FTRL':
+		return tf.train.FtrlOptimizer(learning_rate=learning_rate)
+	elif optimizer_option == 'RMSPROP':
+		return tf.train.RMSPropOptimizer(learning_rate=learning_rate)
+	elif optimizer_option == 'GRAD_DESC':
+		return tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+
 def print_files(root):
 	out = '*' * 79 + '\n**' + ' ' * 34 + ' FILES ' + ' ' * 34 + '**\n' + '*' * 79 + '\n'
 	out += 'Train'+''.join('\n\t%s' % t for t in os.listdir(options.root+'/Train')) + '\n'
 	out += 'Test'+''.join('\n\t%s' % t for t in os.listdir(options.root+'/Test')) + '\n'
-	print(out)
+	if options.verbose: print(out)
 	return out
 
 def print_data_info(db):
@@ -39,10 +53,10 @@ def print_data_info(db):
 	out += "%20s %d\n" % ("Test size:", db.test_size)
 	out += "%20s %d\n" % ("Longest sequence:", db.max_len)
 	out += "%20s %d\n" % ("Vocabulary size:", db.vocab_size)
-	print(out)
+	if options.verbose: print(out)
 	return out
 
-def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classes, num_classes, architecture, activation_functions, widths, strides, feature_maps, train_batch_size, test_batch_size, epochs, dropout=0.5, output_file='Models/'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')):
+def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classes, num_classes, architecture, activation_functions, widths, strides, feature_maps, optimizer, train_batch_size, test_batch_size, epochs, dropout=0.5, output_file='Models/'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')):
 	out = ''
 	train_length = len(y_train)
 	test_length = len(y_test)
@@ -63,7 +77,6 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 			)
 
 			global_step = tf.Variable(0, name="global_step", trainable=False)
-			optimizer = tf.train.AdamOptimizer(1e-3) #learning rate
 			grads_and_vars = optimizer.compute_gradients(cnn.loss)
 			train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
 
@@ -128,15 +141,15 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 				if accuracies[-1][1] > best_result[0]: best_result = [accuracies[-1][1], np.copy(predictions)]
 				time_str = datetime.datetime.now().isoformat()
 				out += time_str+': '+str(accuracies[-1]) + '\n'
-				print(time_str+': '+str(accuracies[-1]))
+				if options.verbose: print(time_str+': '+str(accuracies[-1]))
 			training_time = time.time() - training_time
-			tf.saved_model.simple_save(
-				sess,
-				options.model_export_dir,
-				inputs={'x_input': cnn.x_input},
-				outputs={'prediction': cnn.layers['pred']}
-			)
-			#saver.save(sess, output_file)
+			if options.save_model:
+				tf.saved_model.simple_save(
+					sess,
+					options.model_export_dir,
+					inputs={'x_input': cnn.x_input},
+					outputs={'prediction': cnn.layers['pred']}
+				)
 			#TEST
 			test_times.append(time.time())
 			predictions = evaluate(epoch, test_length, test_batch_size, x_test, y_test)
@@ -171,6 +184,7 @@ labels, predictions, accuracies, best_result, training_time, test_times, trainin
 	options.widths,
 	options.strides,
 	options.feature_maps,
+	get_optimizer(options.optimizer, options.learning_rate),
 	options.train_batch_size,
 	options.test_batch_size,
 	options.epochs,
@@ -181,13 +195,20 @@ report_out += training_out
 
 m = metrics.Metric(labels, best_result[1], classes=db.classes, filename_prefix=options.prefix)
 classification_report = m.get_report()
-print(classification_report)
+if options.verbose: print(classification_report)
 report_out += classification_report
 
-m.save_confusion_matrix(title=options.graph_title)
-m.save_learning_curve(accuracies, 'Learning Curve - '+str(options.root.split('/')[-1]), acc_type=0)
+if options.save_graph:
+	m.save_confusion_matrix(title=options.graph_title)
 
-print('\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times)))
-report_out += '\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times))
-with open('Outputs/Report_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')+'.txt', 'w+') as f:
-	f.write(report_out)
+if options.save_graph:
+	m.save_learning_curve(accuracies, 'Learning Curve - '+str(options.root.split('/')[-1]), acc_type=0)
+
+if options.verbose: print('\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times)))
+
+if options.save_report:
+	report_out += '\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times))
+	with open('Outputs/Report_'+options.prefix+'_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')+'.txt', 'w+') as f:
+		f.write(report_out)
+
+exit(best_result[0])

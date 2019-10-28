@@ -94,6 +94,7 @@ class CNN_model(object):
 				elif activation_functions[i] == 'elu':
 					layers['elu' + str(i)] = tf.nn.elu(tf.nn.bias_add(layers['conv' + str(i)], self.B['conv' + str(i)]))
 					prev_layer = layers['elu' + str(i)]
+				prev_layer = tf.nn.dropout(prev_layer,rate=self.dropout)
 			elif layer == 'pool':
 				if activation_functions[i] == 'avg':
 					layers['pool' + str(i)] = tf.nn.avg_pool(prev_layer, ksize=[1, widths[i], 1, 1], strides=[1, strides[i], 1, 1], padding='SAME')
@@ -119,6 +120,7 @@ class CNN_model(object):
 				elif activation_functions[i] == 'elu':
 					layers['elu' + str(i)] = tf.nn.elu(tf.matmul(prev_layer, self.W['fc' + str(i)]) + self.B['fc' + str(i)])
 					prev_layer = layers['elu' + str(i)]
+				prev_layer = tf.nn.dropout(prev_layer,rate=self.dropout)
 				fc_counter += 1
 			elif layer == 'pred':
 				layers['scores'] = tf.matmul(prev_layer, self.W['pred']) + self.B['pred']
