@@ -39,13 +39,13 @@ def get_options(arguments):
 		nargs = '+',
 		default = ["conv", "pool", "conv", "pool", "conv", "pool", "fc", "fc"],
 		required = False,
-		help = 	"""Architecture structure of the network. Must  be
+		help = 	"""Architecture of the network. Must  be
 				entered as strings separeted  by  spaces.  Each
-				string defines the types of the  layers. "conv"
-				stands for convolution  layers,  "pool"  stands
-				for pooling layers and "fc"  stands  for  fully
-				connected layers. The classification layer must
-				not be included. Example: --architecture   conv
+				string defines the types of the  layers. "conv",
+				"pool" and "fc" stands for convolution, pooling
+				and fully connected layers respectively. The 
+				classification layer must not be included. 
+				Example: --architecture   conv
 				pool conv pool conv pool fc fc"""
 	)
 
@@ -174,7 +174,7 @@ def get_options(arguments):
 		dest = 'epochs',
 		type = int,
 		nargs = 1,
-		default = [10],
+		default = [30],
 		required = False,
 		help = """Number of epochs"""
 	)
@@ -190,14 +190,35 @@ def get_options(arguments):
 	)
 
 	parser.add_argument(
-		'-gt', '--graph-title',
-		dest = 'graph_title',
+		'-sg', '--save-graphs',
+		dest = 'save_graphs',
+		const = True,
+		action = 'store_const',
+		default = False,
+		required = False,
+		help = """Sets the graphs to be saved on Outputs directory"""
+	)
+
+	parser.add_argument(
+		'-cmt', '--confusion-matrix-title',
+		dest = 'cm_title',
 		type = str,
 		nargs = '+',
 		default = ['Confusion Matrix'],
 		required = False,
-		help = """Title of the graph that will be generated containing
+		help = """Title of the confusion matrix graph that will be generated containing
 		the confusion matrix of test set classification"""
+	)
+
+	parser.add_argument(
+		'-lct', '--learning-curve-title',
+		dest = 'lc_title',
+		type = str,
+		nargs = '+',
+		default = ['Learning Curve'],
+		required = False,
+		help = """Title of the learning curve graph that will be generated containing
+		the learning curve of the training of the model"""
 	)
 
 	parser.add_argument(
@@ -222,16 +243,6 @@ def get_options(arguments):
 		the folder already exists the user will be prompted to overwrite
 		the current existing folder with the trained model or to enter
 		a new folder to store the model."""
-	)
-
-	parser.add_argument(
-		'-sg', '--save-graph',
-		dest = 'save_graph',
-		const = True,
-		action = 'store_const',
-		default = False,
-		required = False,
-		help = """Sets the graphs to be saved on Outputs directory"""
 	)
 
 	parser.add_argument(
@@ -276,7 +287,8 @@ def get_options(arguments):
 	options.dropout = options.dropout[0]
 	options.optimizer = options.optimizer[0].upper()
 	options.learning_rate = options.learning_rate[0]
-	options.graph_title = ' '.join(options.graph_title)
+	options.cm_title = ' '.join(options.cm_title)
+	options.lc_title = ' '.join(options.lc_title)
 	options.prefix = options.prefix[0]
 	options.model_export_dir = options.model_export_dir[0]
 
@@ -304,6 +316,14 @@ def get_options(arguments):
 	if options.optimizer not in ['ADAM','ADADELTA','ADAGRAD','FTRL','RMSPROP','GRAD_DESC']:
 		print('ERROR\n\nOptimizer '+options.optimizer+' is not a valid optimizer option!\nAvailable optimizers are: adam, adadelta, adagrad, ftrl, rmsprop and grad_desc\nPlease choose one of the above optimizer to train your model'+HELP_MSG)
 		exit(-8)
+	for l in options.architecture:
+		if l.upper() not in ['CONV','POOL','FC']:
+			print('ERROR\n\nArchitecture parameter "'l+'" is not a valid layer type option!\nAvailable layer types are: conv, pool, fc\nPlease choose one of the above layer types'+HELP_MSG)
+			exit(-9)
+	for func in options.functions:
+		if func.upper() not in ['RELU','TANH','SIGMOID','LEAKY_RELU','ELU','AVG','MAX']:
+			print('ERROR\n\nFunctions parameter "'func+'" is not a valid function option!\nAvailable functions are: relu, tanh, sigmoid, leaky_relu, elu, avg and max\nPlease choose one of the above layer types'+HELP_MSG)
+			exit(-10)
 	if os.path.isdir(options.model_export_dir):
 		old_export_dir = options.model_export_dir
 		options.model_export_dir = 'Models/Model_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -330,11 +350,12 @@ def print_options(options):
 	out += '%20s %s\n' % ('Optimizer:',options.optimizer)
 	out += '%20s %f\n' % ('Learning rate:',options.learning_rate)
 
-	if options.save_graph:
-		out += '%20s\n' % ('Saving graph:')
-		out += '%20s %s\n' % ('Graph Title:',options.graph_title)
+	if options.save_graphs:
+		out += '%20s\n' % ('Saving graphs:')
+		out += '%20s %s\n' % ('Confusion Matrix Title:',options.cm_title)
+		out += '%20s %s\n' % ('Learning Curve Title:',options.lc_title)
 	else:
-		out += '%20s\n' % ('Not saving graph:')
+		out += '%20s\n' % ('Not saving graphs:')
 
 	if options.save_report:
 		out += '%20s\n' % ('Saving report:')
@@ -347,7 +368,7 @@ def print_options(options):
 	else:
 		out += '%20s\n' % ('Not saving model:')
 
-	if options.save_graph or options.save_report:
+	if options.save_graphs or options.save_report:
 		out += '%20s %s\n' % ('Prefix:',options.prefix)
 
 	out += '%20s %s\n' % ('Architecture:',''.join('%-8s' % t for t in options.architecture))

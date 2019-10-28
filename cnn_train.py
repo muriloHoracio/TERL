@@ -198,11 +198,11 @@ classification_report = m.get_report()
 if options.verbose: print(classification_report)
 report_out += classification_report
 
-if options.save_graph:
-	m.save_confusion_matrix(title=options.graph_title)
+if options.save_graphs:
+	m.save_confusion_matrix(title=options.cm_title)
 
-if options.save_graph:
-	m.save_learning_curve(accuracies, 'Learning Curve - '+str(options.root.split('/')[-1]), acc_type=0)
+if options.save_graphs:
+	m.save_learning_curve(accuracies, title=options.lc_title, acc_type=0)
 
 if options.verbose: print('\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times)))
 
