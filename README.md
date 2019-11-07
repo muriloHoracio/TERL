@@ -28,7 +28,7 @@ Root
 The filenames on Train and Test folders must be identicals and reflect the class that each file represents.
 
 ## Usage Example
-###Train (cnn_train.py)
+### Train (cnn_train.py)
 This is an example how to train a model with CNNTEC. The files are stored over Train and Test folders, which are stored on Dataset folder, sotored in the CNNTEC folder.
 
 ```
@@ -57,7 +57,7 @@ Example:
 ```
 python3 cnn_train.py -r Dataset -l 6 -a conv pool conv pool fc fc -f relu avg relu avg relu relu -w 30 20 30 20 1500 500 -s 1 20 1 20 -fm 64 32 -sg -sr -sm
 ```
-###Test (cnn_test.py)
+### Test (cnn_test.py)
 This is an example how to test a CNNTEC trained and saved model.
 
 ## Parameters
