@@ -99,11 +99,13 @@ def print_model(architecture, functions, widths, strides, feature_maps, max_len)
 
 def get_data(files, max_len):
 	seqs = []
+	headers = []
 	for fl in files:
 		with open(fl,'r') as f:
 			seq = ''
 			for l in f.readlines():
 				if l[0] == '>':
+					headers.append(l)
 					if seq != '':
 						seqs.append(np.array([nucleotide_to_int[c] for c in seq], dtype=np.uint8))
 						if len(seqs[-1]) <= max_len:

@@ -13,7 +13,7 @@ def calculate_flatten_shape(architecture, widths, feature_maps, max_len):
 
  
 class CNN_model(object):
-	def __init__(self, num_classes, classes, architecture, functions, widths, strides, feature_maps, vocab_size, max_len, l2_reg_lambda=0.0):
+	def __init__(self, num_classes, classes, architecture, functions, widths, strides, feature_maps, vocab_size, max_len, l2_reg_lambda=0.00001):
 		#initializes weights and biases
 		architecture.append('pred')
 		functions.append('pred')
@@ -78,7 +78,7 @@ class CNN_model(object):
 		prev_layer = self.x_input
 		for i, layer in enumerate(architectures):
 			if layer == 'conv':
-				layers['conv' + str(i)] = tf.nn.conv2d(prev_layer, self.W['conv' + str(i)], strides=[strides[i], 1, 1, 1], padding='SAME' if i != 0 else 'VALID')
+				layers['conv' + str(i)] = tf.nn.conv2d(prev_layer, self.W['conv' + str(i)], strides=[strides[i], 1, 1, 1], dilation=[2,1,1,1], padding='SAME' if i != 0 else 'VALID')
 				if functions[i] == 'relu':
 					layers['relu' + str(i)] = tf.nn.relu(tf.nn.bias_add(layers['conv' + str(i)], self.B['conv' + str(i)]))
 					prev_layer = layers['relu' + str(i)]
@@ -94,7 +94,7 @@ class CNN_model(object):
 				elif functions[i] == 'elu':
 					layers['elu' + str(i)] = tf.nn.elu(tf.nn.bias_add(layers['conv' + str(i)], self.B['conv' + str(i)]))
 					prev_layer = layers['elu' + str(i)]
-				prev_layer = tf.nn.dropout(prev_layer,rate=self.dropout)
+				#prev_layer = tf.nn.dropout(prev_layer,rate=self.dropout)
 			elif layer == 'pool':
 				if functions[i] == 'avg':
 					layers['pool' + str(i)] = tf.nn.avg_pool(prev_layer, ksize=[1, widths[i], 1, 1], strides=[1, strides[i], 1, 1], padding='SAME')
@@ -124,6 +124,7 @@ class CNN_model(object):
 				fc_counter += 1
 			elif layer == 'pred':
 				layers['scores'] = tf.matmul(prev_layer, self.W['pred']) + self.B['pred']
+				#layers['scores'] = tf.nn.softmax(tf.matmul(prev_layer, self.W['pred']) + self.B['pred'])
 				layers['pred'] = tf.argmax(layers['scores'], 1, name='prediction')
 		return layers
 	def print_layers_shape(self):
