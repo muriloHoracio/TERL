@@ -6,13 +6,14 @@ logging.set_verbosity(logging.ERROR)
 import sys
 import os
 import numpy as np
-from keras.layers import Input, Lambda, Conv2D, BatchNormalization, AveragePooling2D, ZeroPadding2D, Activation, GlobalAveragePooling2D, Dense
+from keras.layers import Input, Lambda, Conv2D, BatchNormalization, AveragePooling2D, ZeroPadding2D, Activation, GlobalAveragePooling2D, Dense, Flatten
 from keras.models import Model
 from keras.backend import one_hot
 from resnet_blocks import conv_block, identity_block
 import data_handler as dh
 from data_generator import DataGenerator
 import metrics
+import matplotlib.pyplot as plt
 import time
 import datetime
 from train_parser import get_options
@@ -56,8 +57,16 @@ def One_hot(x, vocab_size):
 
 inputs = Input(shape=(db.max_len,), dtype='uint8')
 x = Lambda(One_hot, arguments={'vocab_size': db.vocab_size}, name='one_hot')(inputs)
-x = Conv2D(16, (30, db.vocab_size), strides=(2, db.vocab_size), padding='valid', kernel_initializer='he_normal', name='conv1')(x)
-x = AveragePooling2D((30, 1), strides=(30, 1), name='pool1')(x)
+x = Conv2D(16, (30, db.vocab_size), strides=(2, db.vocab_size), activation='relu', padding='valid', kernel_initializer='he_normal', name='conv1')(x)
+x = AveragePooling2D((20, 1), strides=(20, 1), name='pool1')(x)
+x = Conv2D(32, (30, 1), strides=(1, 1), padding='same', activation='relu', name='conv2')(x)
+x = AveragePooling2D((20, 1), strides=(20, 1), name='pool2')(x)
+x = Conv2D(64, (10, 1), strides=(1, 1), padding='same', activation='relu', name='conv3')(x)
+x = AveragePooling2D((10, 1), strides=(10, 1), name='pool3')(x)
+x = Flatten()(x)
+x = Dense(512, activation='relu')(x)
+x = Dense(256, activation='relu')(x)
+"""
 x = BatchNormalization(name='bn_conv1')(x)
 x = Activation('relu')(x)
 x = AveragePooling2D((30, 1), strides=(30, 1))(x)
@@ -83,27 +92,18 @@ x = identity_block(x, (3, 1), [16, 16, 32], stage=4, block='b')
 x = identity_block(x, (3, 1), [16, 16, 32], stage=4, block='c')
 x = GlobalAveragePooling2D()(x)
 x = Dense(256, activation='relu')(x)
+"""
 preds = Dense(db.num_classes, activation='softmax')(x)
 model = Model(inputs, preds, name='resnet50')
 model.summary()
 
 model.compile(optimizer=options.optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
-model.fit_generator(generator=train_generator, validation_data=test_generator, epochs=options.epochs)
+history = model.fit_generator(generator=train_generator, validation_data=test_generator, epochs=options.epochs)
 
-"""
-for e in range(30):
-	for i in range(0,320,32):
-		train_loss, train_acc =  model.train_on_batch(db.x_train[i:i+32], one_hot(db.y_train[i:i+32], db.num_classes), reset_metrics=False)
-		sys.stdout.write("Epoch %d/%d: %d/%d [%-60s] train loss: %f.4 - train acc:  %f.4\r" % (e+1, 30, i, db.train_size, '='*(int(i/(db.train_size/60))), train_loss, train_acc))
-		sys.stdout.flush()
-	for i in range(0,db.test_size,32):
-	test_acc, test_loss = model.evaluate(db.x_test, db.y_test, verbose=0)
-	sys.stdout.write("Epoch %d/%d: %d/%d [%-60s] train loss: %.4f - train acc:  %.4f, test loss: %.4f - test acc: %.4f\n" % (e+1, 30, i, db.train_size, '='*(int(i/(db.train_size/60))), train_loss, train_acc, test_loss, test_acc))
-	sys.stdout.flush()
+y_prob = model.predict(db.x_test)
+y_predicted_classes = y_prob.argmax(axis=-1)
 
-#model.fit(db.x_train, db.y_train, steps_per_epoch=db.train_size//32, epochs=50, shuffle=True, validation_data=(db.x_test, db.y_test), validation_steps=db.test_size//32)
-
-m = metrics.Metric(labels, best_result[1], classes=db.classes, filename_prefix=options.prefix)
+m = metrics.Metric(db.y_test, y_predicted_classes, classes=db.classes, filename_prefix=options.prefix)
 classification_report = m.get_report()
 if options.verbose: print(classification_report)
 report_out += classification_report
@@ -111,15 +111,35 @@ report_out += classification_report
 if options.save_graphs:
 	m.save_confusion_matrix(title=options.cm_title)
 
-if options.save_graphs:
-	m.save_learning_curve(accuracies, title=options.lc_title, acc_type=0)
+# Plot training & validation accuracy values
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('Model accuracy')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Test'], loc='upper left')
+plt.show()
+plt.savefig('Outputs/'+options.prefix+'_model_accuracies_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')+'.png')
 
-if options.verbose: print('\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times)))
+# Plot training & validation loss values
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Model loss')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Test'], loc='upper left')
+plt.show()
+plt.savefig('Outputs/'+options.prefix+'_model_loss_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')+'.png')
+
+
+#if options.save_graphs:
+#	m.save_learning_curve(accuracies, title=options.lc_title, acc_type=0)
+
+#if options.verbose: print('\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times)))
 
 if options.save_report:
-	report_out += '\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times))
+	#report_out += '\n\nTraining time: '+str(training_time)+'\nAverage test time: '+str(sum(test_times)/len(test_times))
 	with open('Outputs/Report_'+options.prefix+'_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')+'.txt', 'w+') as f:
 		f.write(report_out)
 
-exit(best_result[0])
-"""
+#exit(best_result[0])
