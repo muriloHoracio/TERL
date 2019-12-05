@@ -36,7 +36,7 @@ def get_optimizer(optimizer_option, learning_rate):
 		return tf.train.FtrlOptimizer(learning_rate=learning_rate)
 	elif optimizer_option == 'RMSPROP':
 		return tf.train.RMSPropOptimizer(learning_rate=learning_rate)
-	elif optimizer_option == 'GRAD_DESC':
+	elif optimizer_option == 'SGD':
 		return tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
 
 def print_files(root):

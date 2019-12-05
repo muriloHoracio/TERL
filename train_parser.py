@@ -313,7 +313,7 @@ def get_options(arguments):
 	if not (len([a for a in options.architecture if a=='conv' or a=='pool']) == len(options.strides)):
 		print('ERROR\n\nNumber of strides is not equal to the amount of convolution and pooling layers defined on --architecture parameter'+HELP_MSG)
 		exit(-7)
-	if options.optimizer not in ['ADAM','ADADELTA','ADAGRAD','FTRL','RMSPROP','GRAD_DESC']:
+	if options.optimizer not in ['ADAM','ADADELTA','ADAGRAD','FTRL','RMSPROP','SGD']:
 		print('ERROR\n\nOptimizer '+options.optimizer+' is not a valid optimizer option!\nAvailable optimizers are: adam, adadelta, adagrad, ftrl, rmsprop and grad_desc\nPlease choose one of the above optimizer to train your model'+HELP_MSG)
 		exit(-8)
 	for l in options.architecture:
