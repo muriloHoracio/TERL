@@ -87,8 +87,8 @@ preds = Dense(db.num_classes, activation='softmax')(x)
 model = Model(inputs, preds, name='resnet50')
 model.summary()
 
-model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
-model.fit_generator(generator=train_generator, validation_data=test_generator, epochs=10)
+model.compile(optimizer=options.optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+model.fit_generator(generator=train_generator, validation_data=test_generator, epochs=options.epochs)
 
 """
 for e in range(30):
