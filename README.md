@@ -1,8 +1,8 @@
-# CNNTEC
+# TERL
 
-Convolutional Neural Network Transposable Elements Classifier
+Transposable Elements Representation Learner
 
-The CNNTEC can be used to classify any genomic sequence.
+The TERL can be used to classify any genomic sequence.
 This framework provides tools to train and test models.
 Users can opt to deploy the trained network model.
 There are vast parameters that can be used to define the network architecture and to set the model's parameters.
@@ -29,7 +29,7 @@ The filenames on Train and Test folders must be identicals and reflect the class
 
 ## Usage Example
 ### Train (cnn_train.py)
-This is an example how to train a model with CNNTEC. The files are stored over Train and Test folders, which are stored on Dataset folder, sotored in the CNNTEC folder.
+This is an example how to train a model with TERL. The files are stored over Train and Test folders, which are stored on Dataset folder, sotored in the TERL folder.
 
 ```
 Dataset
@@ -58,7 +58,7 @@ Example:
 python3 cnn_train.py -r Dataset -l 6 -a conv pool conv pool fc fc -f relu avg relu avg relu relu -w 30 20 30 20 1500 500 -s 1 20 1 20 -fm 64 32 -sg -sr -sm
 ```
 ### Test (cnn_test.py)
-This is an example how to test a CNNTEC trained and saved model.
+This is an example how to test a TERL trained and saved model.
 
 ## Parameters
 This section describes the parameters with its possible values and examples of usage
@@ -69,7 +69,7 @@ It can be the relative or absolute path to Root
 
 Example:
 ```
-python3 cnn_train.py -r ~/CNNTEC/Datasets/DS1
+python3 cnn_train.py -r ~/TERL/Datasets/DS1
 ```
 
 ### -l, --layers
@@ -273,7 +273,7 @@ python3 cnn_train.py -sm
 ```
 
 ### -md, --model-export-dir
-Parameter that defines the folder where the model will be exported. The value should be the relative or absolute path to the desired folder. We suggest the use of folder Models created on the folder CNNTEC.
+Parameter that defines the folder where the model will be exported. The value should be the relative or absolute path to the desired folder. We suggest the use of folder Models created on the folder TERL.
 
 Default value is: Models/Model_yyyymmdd_HHMMSS
 
@@ -285,7 +285,7 @@ python3 cnn_train.py -md Models/DS1_Model
 ```
 
 ### -sr, --save-report
-Parameter that sets the reports to be saved on the folder Outputs that is located in the CNNTEC folder.
+Parameter that sets the reports to be saved on the folder Outputs that is located in the TERL folder.
 
 By default, reports are not saved. Users who want to save it must set it with this parameter.
 
