@@ -1,3 +1,40 @@
+# Instalation
+
+To install TERL you need to clone the repository into your local machine. First you need to have git installed in your local machine. You can follow [these steps](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) to install git.
+Once you have git installed, you can clone this repository with the following command:
+```
+git clone https://github.com/muriloHoracio/TERL
+```
+
+After the clone, you have a directory named TERL which contains all codes to train TERL and classify sequences.
+
+Since TERL is made on python and use some libraries, we recomend the use of virtual environmnets to run it.
+
+To create a virtual environment you need to have virtualenv installed, in order to do that you can run the following command in terminal:
+```
+sudo apt-get install virtualenv
+```
+To create the virtual environment, you need to execute the following command:
+```
+virtualenv -p python .venv
+```
+Once the virtual environment is created, you need to active the environment in order to install the dependencies of TERL. To do this, run the following command:
+```
+. .venv/bin/activate
+```
+If everything worked well, you will notice that ``(.venv)`` will appear before the user name in the command line.
+
+Now you must install the dependencies needed to run TERL. 
+
+If you are using GPU, you must run the following command:
+```
+pip3 install -r requirements-gpu.txt
+```
+Otherwise, you must run the following command:
+```
+pip3 install -r requirements.txt
+```
+
 # TERL
 
 Transposable Elements Representation Learner
