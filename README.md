@@ -27,15 +27,19 @@ git clone https://github.com/muriloHoracio/TERL
 
 After the clone, you have a directory named TERL which contains all codes to train TERL and classify sequences.
 
-Since TERL is made on python and use some libraries, we recomend the use of virtual environmnets to run it. Before installing virtualenv, make sure you have pip3 installed. To install pip3 run the followoing command:
+Since TERL is made on Python 3.6 and use some libraries, we recomend the use of virtual environmnets to run it. Before installing virtualenv, make sure you have pip3 installed. To install pip3 run the followoing command:
 ```
 sudo apt-get install python3-pip
 ```
-After installing pip3, you must ensure that python headers are installed. If you are using a Ubuntu derived Linux distro, run the following command:
+Update pip3 by running the following command:
 ```
-sudo apt-get install python3-dev
+sudo -H pip3 install --upgrade pip
 ```
-To create a virtual environment you need to have virtualenv installed, in order to do that you can run the following command in terminal:
+Also, you need to install setup-tools by running the following command:
+```
+sudo apt-get install python3-setuptools
+``` 
+To create a virtual environment you need to have virtualenv installed, in order to do that you can run the following command:
 ```
 sudo apt-get install virtualenv
 ```
@@ -59,6 +63,7 @@ Otherwise, you must run the following command:
 ```
 pip3 install -r requirements.txt
 ```
+If everything went well, you have just installed TERL and are ready to train your on model on your sequences or classify some sequences based on a previously trained model.
 
 # TERL
 
