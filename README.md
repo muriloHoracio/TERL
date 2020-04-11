@@ -89,8 +89,7 @@ Root
 ```
 The filenames on Train and Test folders must be identicals and reflect the class that each file represents.
 
-## Usage Example
-### Train (terl_train.py)
+## Train Usage (terl_train.py)
 This is an example how to train a model with TERL. The files are stored over Train and Test folders, which are stored on Dataset folder, sotored in the TERL folder.
 
 ```
@@ -119,10 +118,8 @@ Example:
 ```
 python3 terl_train.py -r Dataset -l 6 -a conv pool conv pool fc fc -f relu avg relu avg relu relu -w 30 20 30 20 1500 500 -s 1 20 1 20 -fm 64 32 -sg -sr -sm
 ```
-### Test (cnn_test.py)
-This is an example how to test a TERL trained and saved model.
 
-## Parameters
+## Train Parameters
 This section describes the parameters with its possible values and examples of usage
 ### -r, --root
 **Required** parameter that defines the Root folder, where Train and Test folders containing sample sequences files are located.
@@ -383,3 +380,12 @@ Example:
 ```
 python3 terl_train.py -nv
 ```
+## Test/Classification Usage (terl_test.py)
+This is an example how to test TERL or classify files. You must inform a trained and saved model to perform this operation.
+
+Example:
+```
+python3 terl_test.py -m Models/TERLModel -f file1.fa file2.fa file3.fa 
+```
+
+After classification is done, three files with prefix ``TERL_YYYYmmdd_HHMMSS_`` will be created containing the results of the classification. TERL copies the sequences and changes the header according to the predicted class.
