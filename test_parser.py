@@ -46,21 +46,7 @@ def get_options(arguments):
     )
 
     parser.add_argument(
-        '-e', '--export-dir',
-        dest = 'model_export_dir',
-        type = str,
-        nargs = 1,
-        default = ['Models/Model_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')],
-        required = False,
-        help = """Folder in which the trained model will be stored 
-        to be used as a classifier by the cnn_test.py program. If 
-        the folder already exists the user will be prompted to overwrite
-        the current existing folder with the trained model or to enter
-        a new folder to store the model."""
-    )
-
-    parser.add_argument(
-        '-nv', '--no-verbose',
+        '-q', '--quiet',
         dest = 'verbose',
         const = False,
         action = 'store_const',
@@ -74,15 +60,17 @@ def get_options(arguments):
     options.model = options.model
     options.batch = options.batch[0]
     options.prefix = options.prefix[0]
-    options.model_export_dir = options.model_export_dir[0]
 
     if not os.path.isdir(options.model):
-        print('ERROR\n\nPath: '+options.model>' does not exist'+HELP_MSG)
+        print('ERROR\n\nPath: '+options.model+' does not exist'+HELP_MSG)
         exit(-1)
-    if os.path.isdir(options.model_export_dir):
-        old_export_dir = options.model_export_dir
-        options.model_export_dir = 'Models/Model_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-        print('WARNING\n\nThe informed folder to export the model ('+old_export_dir+') already exists.\nThe model will be saved on folder: '+options.model_export_dir)
+    for fl in options.files:
+        if not os.path.exists(fl):
+            print('ERROR\n\nPath: '+fl+' does not exist'+HELP_MSG)
+            exit(-2)
+        if not os.path.isfile(fl):
+            print('ERROR\n\nPath: '+fl+' does not represent a file'+HELP_MSG)
+            exit(-2)
     return options
 
 def print_options(options):
@@ -93,4 +81,5 @@ def print_options(options):
         out += '%20s %s\n' % ('',f)
     out += '%20s %d\n' % ('Batch:',options.batch)
     out += '%20s %s\n' % ('Prefix:',options.prefix)
+    out += '%20s %s\n' % ('Verbose:',options.verbose)
     print(out)

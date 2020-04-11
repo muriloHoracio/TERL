@@ -6,14 +6,14 @@ import sys
 import os
 
 options = get_options(sys.argv[1:])
-print_options(options)
+if options.verbose: print_options(options)
 
 import warnings
 warnings.filterwarnings('ignore')
 
 import numpy as np
 import tensorflow as tf
-print('LOAD LIB TIME: ', time() - start)
+if options.verbose: print('LOAD LIB TIME: ', time() - start)
 
 tf.logging.set_verbosity(tf.logging.ERROR)
 tf.disable_v2_behavior()
@@ -118,7 +118,7 @@ def get_data(seq_file, max_len):
                     if len(seqs[-1]) <= max_len:
                         seqs[-1] = np.pad(seqs[-1], (0, max_len - len(seqs[-1])), 'constant', constant_values=(0, 0))
                     else:
-                        print(LONGER_SEQ_WARNING.format(fl=fl, longer=len(seqs[-1]), max_len=max_len))
+                        if options.verbose: print(LONGER_SEQ_WARNING.format(fl=fl, longer=len(seqs[-1]), max_len=max_len))
                         seqs[-1] = seqs[-1][0:max_len]
     #							exit(-1)
                 seq = ''
@@ -131,9 +131,9 @@ def get_data(seq_file, max_len):
         if len(seqs[-1]) <= max_len:
             seqs[-1] = np.pad(seqs[-1], (0, max_len - len(seqs[-1])), 'constant', constant_values=(0, 0))
         else:
-            print(LONGER_SEQ_WARNING.format(fl=fl, longer=len(seqs[-1]), max_len=max_len))
+            if options.verbose: print(LONGER_SEQ_WARNING.format(fl=fl, longer=len(seqs[-1]), max_len=max_len))
             seqs[-1] = seqs[-1][0:max_len]
-    print('LOAD DATA TIME: ', time() - start)
+    if options.verbose: print('LOAD DATA TIME: ', time() - start)
     return np.array(seqs), seqs_raw
 
 with tf.Session(graph=tf.Graph()) as sess:
@@ -143,7 +143,7 @@ with tf.Session(graph=tf.Graph()) as sess:
         ['serve'],
         options.model
     )
-    print('LOAD MODEL TIME: ', time() - start)
+    if options.verbose: print('LOAD MODEL TIME: ', time() - start)
     num_classes = sess.run('num_classes:0')
     classes = [c.decode('utf-8') for c in sess.run('classes:0')]
     architecture = [layer.decode('utf-8') for layer in sess.run('architecture:0')]
@@ -154,7 +154,7 @@ with tf.Session(graph=tf.Graph()) as sess:
     vocab_size = sess.run('vocab_size:0')
     max_len = sess.run('max_len:0')
 
-    print_model(architecture, functions, widths, strides, feature_maps, max_len)
+    if options.verbose: print_model(architecture, functions, widths, strides, feature_maps, max_len)
 
     for fl in options.files:
         x, seqs = get_data(fl, max_len)
@@ -170,7 +170,7 @@ with tf.Session(graph=tf.Graph()) as sess:
             x_batch = pre_xo.reshape(x_batch.shape[0], max_len, vocab_size, 1)
 
             predictions = np.concatenate([predictions, sess.run('prediction:0', feed_dict={'x_input:0': x_batch})])
-        print('CLASSIFICATION TIME: ', time() - start)
+        if options.verbose: print('CLASSIFICATION TIME: ', time() - start)
 
         # ******* WRITE RESULTS *******
         start = time()
@@ -181,13 +181,14 @@ with tf.Session(graph=tf.Graph()) as sess:
             out += '>' + classification[classes[pred]][0] + '\t' + str(classification[classes[pred]][1]) + '\n'
             out += seqs[i]
 
-        print('*' * 79 + '\n**' + ' ' * 33 + ' RESULTS ' + ' ' * 33 + '**\n' + '*' * 79)
-        print('\nFILE: '+fl+'\n')
+        if options.verbose:
+            print('*' * 79 + '\n**' + ' ' * 33 + ' RESULTS ' + ' ' * 33 + '**\n' + '*' * 79)
+            print('\nFILE: '+fl+'\n')
         for cl in classification.keys():
             if classification[cl][1] > 0:
-                print(f'{cl:>20s}:{classification[cl][1]:7d}')
+                if options.verbose: print(f'{cl:>20s}:{classification[cl][1]:7d}')
                 classification[cl][1] = 0
 
         with open(options.prefix+os.path.basename(fl),'w+') as f:
             f.write(out)
-        print('\nWRITE RESULTS TIME: ', time() - start)
+        if options.verbose: print('\nWRITE RESULTS TIME: ', time() - start)
