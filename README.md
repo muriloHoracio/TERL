@@ -1,3 +1,22 @@
+# Important
+
+We ask you to cite the main publication related to this software whenever you use any part of this software in any scientific publication.
+
+You may use the following .bibtex to cite the main publication of this software:
+```
+@article {da Cruz2020.03.25.000935,
+	author = {da Cruz, Murilo Horacio Pereira and Domingues, Douglas Silva and Saito, Priscila Tiemi Maeda and Paschoal, Alexandre Rossi and Bugatti, Pedro Henrique},
+	title = {TERL: Classification of Transposable Elements by Convolutional Neural Networks},
+	elocation-id = {2020.03.25.000935},
+	year = {2020},
+	doi = {10.1101/2020.03.25.000935},
+	publisher = {Cold Spring Harbor Laboratory},
+	URL = {https://www.biorxiv.org/content/early/2020/03/26/2020.03.25.000935},
+	eprint = {https://www.biorxiv.org/content/early/2020/03/26/2020.03.25.000935.full.pdf},
+	journal = {bioRxiv}
+}
+```
+
 # Instalation
 
 To install TERL you need to clone the repository into your local machine. First you need to have git installed in your local machine. You can follow [these steps](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) to install git.
