@@ -90,7 +90,7 @@ Root
 The filenames on Train and Test folders must be identicals and reflect the class that each file represents.
 
 ## Usage Example
-### Train (cnn_train.py)
+### Train (terl_train.py)
 This is an example how to train a model with TERL. The files are stored over Train and Test folders, which are stored on Dataset folder, sotored in the TERL folder.
 
 ```
@@ -117,7 +117,7 @@ This example model have the following architecture:
 
 Example:
 ```
-python3 cnn_train.py -r Dataset -l 6 -a conv pool conv pool fc fc -f relu avg relu avg relu relu -w 30 20 30 20 1500 500 -s 1 20 1 20 -fm 64 32 -sg -sr -sm
+python3 terl_train.py -r Dataset -l 6 -a conv pool conv pool fc fc -f relu avg relu avg relu relu -w 30 20 30 20 1500 500 -s 1 20 1 20 -fm 64 32 -sg -sr -sm
 ```
 ### Test (cnn_test.py)
 This is an example how to test a TERL trained and saved model.
@@ -131,7 +131,7 @@ It can be the relative or absolute path to Root
 
 Example:
 ```
-python3 cnn_train.py -r ~/TERL/Datasets/DS1
+python3 terl_train.py -r ~/TERL/Datasets/DS1
 ```
 
 ### -l, --layers
@@ -143,7 +143,7 @@ Default value is 8, which is the number of layers of the default model.
 
 Example:
 ```
-python3 cnn_train.py -l 6
+python3 terl_train.py -l 6
 ```
 
 ### -a, --architecture
@@ -160,7 +160,7 @@ Default value is: conv pool conv pool conv pool fc fc
 
 Example:
 ```
-python3 cnn_train.py -a conv pool conv pool fc fc
+python3 terl_train.py -a conv pool conv pool fc fc
 ```
 
 ### -f, --functions
@@ -181,7 +181,7 @@ Default value is: -f relu avg relu avg relu avg relu relu
 
 Example:
 ```
-python3 cnn_train.py -f relu avg relu avg relu relu
+python3 terl_train.py -f relu avg relu avg relu relu
 ```
 
 ### -w, --widths
@@ -191,7 +191,7 @@ Default parameter is: -w 30 20 30 20 30 10 1500 500
 
 Example:
 ```
-python3 cnn_train.py -w 30 20 30 20 1500 500
+python3 terl_train.py -w 30 20 30 20 1500 500
 ```
 
 ### -s, --strides
@@ -201,7 +201,7 @@ Default value is: -s 1 20 1 20 1 10
 
 Example:
 ```
-python3 cnn_train.py -s 1 20 1 20
+python3 terl_train.py -s 1 20 1 20
 ```
 
 ### -fm, --feature-maps
@@ -211,7 +211,7 @@ Default value is: -fm 64 32 16
 
 Example:
 ```
-python3 cnn_train.py -fm 64 32
+python3 terl_train.py -fm 64 32
 ```
 
 ### -o, --optimizer
@@ -229,7 +229,7 @@ Default value is: -o adam
 
 Example:
 ```
-python3 cnn_train.py -o adagrad
+python3 terl_train.py -o adagrad
 ```
 
 ### -lr, --learning-rate
@@ -239,7 +239,7 @@ Default value is: -lr 0.001
 
 Example:
 ```
-python3 cnn_train.py -lr 0.001
+python3 terl_train.py -lr 0.001
 ```
 
 ### -trb, --train-batch-size
@@ -249,7 +249,7 @@ Default value is: 32
 
 Example:
 ```
-python3 cnn_train.py -trb 64
+python3 terl_train.py -trb 64
 ```
 
 ### -tsb, --test-batch-size
@@ -259,7 +259,7 @@ Default value is: 32
 
 Example:
 ```
-python3 cnn_train.py -tsb 64
+python3 terl_train.py -tsb 64
 ```
 
 ### -e, --epochs
@@ -269,7 +269,7 @@ Default value is: 30
 
 Example:
 ```
-python3 cnn_train.py -e 100
+python3 terl_train.py -e 100
 ```
 
 ### -d, --dropout
@@ -279,7 +279,7 @@ Default value is: 0.5
 
 Example:
 ```
-python3 cnn_train.py -d 0.3
+python3 terl_train.py -d 0.3
 ```
 
 ### -sg, --save-graphs
@@ -289,7 +289,7 @@ By default, graphs are not saved, meaning you need to set it if you really want 
 
 Example:
 ```
-python3 cnn_train.py -sg
+python3 terl_train.py -sg
 ```
 
 ### -cmt, --confusion-matrix-title
@@ -299,7 +299,7 @@ Default value is: Confusion Matrix
 
 Example:
 ```
-python3 cnn_train.py -cmt Confusion Matrix DS1
+python3 terl_train.py -cmt Confusion Matrix DS1
 ```
 
 ### -lct, --learning-curve-title
@@ -309,7 +309,7 @@ Default value is: Learning Curve
 
 Example:
 ```
-python3 cnn_train.py -lct Learning Curve DS1
+python3 terl_train.py -lct Learning Curve DS1
 ```
 
 ### -p, --prefix
@@ -321,7 +321,7 @@ Where yyyy is the 4 digit current year, mm is the 2 digit current month, dd is t
 
 Example:
 ```
-python3 cnn_train.py -p DS1_Tests
+python3 terl_train.py -p DS1_Tests
 ```
 
 ### -sm, --save-model
@@ -331,7 +331,7 @@ By default, the model is not saved. Users who want to save their models must set
 
 Example:
 ```
-python3 cnn_train.py -sm
+python3 terl_train.py -sm
 ```
 
 ### -md, --model-export-dir
@@ -343,7 +343,7 @@ Where yyyy is the 4 digit current year, mm is the 2 digit current month, dd is t
 
 Example:
 ```
-python3 cnn_train.py -md Models/DS1_Model
+python3 terl_train.py -md Models/DS1_Model
 ```
 
 ### -sr, --save-report
@@ -353,7 +353,7 @@ By default, reports are not saved. Users who want to save it must set it with th
 
 Example:
 ```
-python3 cnn_train.py -sr
+python3 terl_train.py -sr
 ```
 
 ### -sm, --save-model
@@ -363,7 +363,7 @@ By default, the model is not saved. Users who want to save their models must set
 
 Example:
 ```
-python3 cnn_train.py -sm
+python3 terl_train.py -sm
 ```
 
 ### -nv, --no-verbose
@@ -381,5 +381,5 @@ By default, verbose is on. Users who want to disable it must set it with this pa
 
 Example:
 ```
-python3 cnn_train.py -nv
+python3 terl_train.py -nv
 ```
