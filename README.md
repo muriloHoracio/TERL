@@ -120,7 +120,7 @@ python3 terl_train.py -r Dataset -l 6 -a conv pool conv pool fc fc -f relu avg r
 ```
 
 ## Train Parameters
-This section describes the parameters with its possible values and examples of usage
+This section describes the parameters with its possible values and examples of usage.
 ### -r, --root
 **Required** parameter that defines the Root folder, where Train and Test folders containing sample sequences files are located.
 
@@ -389,3 +389,63 @@ python3 terl_test.py -m Models/TERLModel -f file1.fa file2.fa file3.fa
 ```
 
 After classification is done, three files with prefix ``TERL_YYYYmmdd_HHMMSS_`` will be created containing the results of the classification. TERL copies the sequences and changes the header according to the predicted class.
+
+## Test/Classification Parameters
+This section describes the parameters with its possible values and examples of usage.
+
+### -m, --model
+**Required** parameter that defines the model to be used for classification.
+
+Example:
+```
+python3 terl_test.py -m Models/TERLModel
+```
+
+### -f, --files
+Parameter that defines the FASTA files to be classified. After classifying the files, output files are created with a prefix name containing the sequences in the original file and the headers with the predicted classes.
+
+Default value is TERL_YYYYmmdd_HHMMSS_ where YYYY, mm, dd, HH, MM and SS means the current year, month, day, hour, minutes and seconds.
+
+Example:
+```
+python3 terl_test.py -m Models/TERLModel -f file1.fa file2.fa file3.fa
+```
+
+### -b, --batch
+Parameter that defines the batch size that will be used to load sequences and classify them.
+
+Default value is 32
+
+Example:
+```
+python3 terl_test.py -m Models/TERLModel -f file1.fa file2.fa file3.fa -b 64
+```
+
+### -p, --prefix
+Parameter that defines the prefix to be used when writing the output files.
+
+Default value is TERL_YYYYmmdd_HHMMSS_
+
+Example:
+```
+python3 terl_test.py -m Models/TERLModel -f file1.fa file2.fa file3.fa -p TERL_exp1_
+```
+
+Which will results in the following output files:
+```
+TERL_exp1_file1.fa
+TERL_exp1_file2.fa
+TERL_exp1_file3.fa
+```
+
+### -q --quiet
+Parameter that deactivates verbose mode, which prints a lot of useful information. 
+
+Default value is False, which prints useful information in the terminal screen
+
+Example:
+```
+python3 terl_test.py -m Models/TERLModel -f file1.fa file2.fa file3.fa -q
+```
+
+The above command will log only Tensorflow's logs
