@@ -31,7 +31,10 @@ Since TERL is made on python and use some libraries, we recomend the use of virt
 ```
 sudo apt-get install python3-pip
 ```
-
+After installing pip3, you must ensure that python headers are installed. If you are using a Ubuntu derived Linux distro, run the following command:
+```
+sudo apt-get install python3-dev
+```
 To create a virtual environment you need to have virtualenv installed, in order to do that you can run the following command in terminal:
 ```
 sudo apt-get install virtualenv
