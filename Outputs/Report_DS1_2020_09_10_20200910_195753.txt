@@ -1,0 +1,85 @@
+*******************************************************************************
+**                                  OPTIONS                                  **
+*******************************************************************************
+               Root: /home/murilo/Codes/CNNTEC/Datasets/DS1
+        Train batch: 32
+         Test batch: 32
+             Epochs: 1
+            Dropout: 0.50
+   Number of layers: 8
+          Optimizer: ADAM
+      Learning rate: 0.001000
+      L2 regulation: 0.001000
+       Saving graph:
+        Graph Title: Confusion Matrix
+      Saving report:
+       Saving model:
+   Model export dir: Models/Test
+             Prefix: DS1_2020_09_10
+       Architecture: conv    pool    conv    pool    conv    pool    fc      fc      
+          Functions: relu    avg     relu    avg     relu    avg     relu    relu    
+             Widths: 20      10      20      15      35      15      1000    500     
+            Strides: 1       10      1       15      1       15      
+       Feature maps: 64      -       32      -       32      -       -       -       
+          Dilations: 1       -       1       -       1       -       -       -       
+*******************************************************************************
+**                                   FILES                                   **
+*******************************************************************************
+Train
+	L1.fa
+	Mariner.fa
+	Bel-Pao.fa
+	ERV.fa
+	Copia.fa
+	Gypsy.fa
+	Random.fa
+	hAT.fa
+Test
+	L1.fa
+	Mariner.fa
+	Bel-Pao.fa
+	ERV.fa
+	Copia.fa
+	Gypsy.fa
+	Random.fa
+	hAT.fa
+*******************************************************************************
+**                            CLASSIFICATION INFO                            **
+*******************************************************************************
+            Classes: L1, Mariner, Bel-Pao, ERV, Copia, Gypsy, Random, hAT
+         Train size: 21824
+          Test size: 2728
+   Longest sequence: 21482
+    Vocabulary size: 6
+2020-09-10T19:57:50.651221: [0, 0.8461326979469038, 0.8461326979471753, 0.38453079178871535]
+*******************************************************************************
+**                           CLASSIFICATION REPORT                           **
+*******************************************************************************
+Confusion Matrix (row = true, column = predicted):
+[[124  32  50  30  48  38   7  12]
+ [  4 197   5  84  24   3   6  18]
+ [ 21   4 119 126  45  18   7   1]
+ [ 14  11  18 276   4  12   3   3]
+ [  8   8  14  69 188  45   4   5]
+ [ 27  19  29  92  98  58   3  15]
+ [ 18  46  48 118  60  24  13  14]
+ [ 17  66  10  94  53  10  17  74]]
+
+Statistics:
+   Classes   Accuracy      Error  Precision     Recall Specificity   F1-score
+        L1      0.880      0.120      0.532      0.364      0.954      0.432
+   Mariner      0.879      0.121      0.514      0.578      0.922      0.544
+   Bel-Pao      0.855      0.145      0.406      0.349      0.927      0.375
+       ERV      0.751      0.249      0.310      0.809      0.743      0.449
+     Copia      0.822      0.178      0.362      0.551      0.861      0.437
+     Gypsy      0.841      0.159      0.279      0.170      0.937      0.211
+    Random      0.863      0.137      0.217      0.038      0.980      0.065
+       hAT      0.877      0.123      0.521      0.217      0.972      0.306
+
+Macro mean      0.846      0.154      0.393      0.385      0.912      0.389
+Micro mean      0.846      0.154      0.385      0.385      0.912      0.385
+ Accuracy*      0.385
+
+
+Training time: 55.015976667404175
+Average test time: 2.974183440208435

@@ -6,7 +6,7 @@ options = get_options(sys.argv[1:])
 report_out = print_options(options)
 
 import warnings
-warnings.filterwarnings('ignore')
+#warnings.filterwarnings('ignore')
 
 import os
 import numpy as np
@@ -16,9 +16,10 @@ import data_handler as dh
 import metrics
 import time
 import datetime
+import pickle
 
-tf.logging.set_verbosity(tf.logging.ERROR)
-tf.disable_v2_behavior()
+#tf.logging.set_verbosity(tf.logging.ERROR)
+#tf.disable_v2_behavior()
 
 def get_files(root):
     train_files = [root+'/Train/'+train_file for train_file in os.listdir(root+'/Train')]
@@ -90,38 +91,42 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
             accuracies = []
             training_time = 0
             test_times = []
-            best_result = [0, []]
+            best_result = [0, [], []]
             sess.run([tf.global_variables_initializer(),tf.local_variables_initializer()])
 
             def train_step(x_batch, y_batch):
                 feed_dict = {
                     cnn.x_input: x_batch,
-                    cnn.y_input: y_batch,
-                    cnn.dropout: dropout
+                    cnn.y_input: y_batch
                 }
                 _, step = sess.run([train_op, global_step], feed_dict)
 
             def eval_step(x_batch, y_batch):
                 feed_dict = {
                     cnn.x_input: x_batch,
-                    cnn.y_input: y_batch,
-                    cnn.dropout: dropout
+                    cnn.y_input: y_batch
                 }
-                predictions = sess.run(cnn.layers['pred'], feed_dict)
-                return predictions
+                predictions, scores = sess.run([cnn.layers['pred'], cnn.layers['scores']], feed_dict)
+                return predictions, scores
             
             def evaluate(epoch, test_len, batch_size, x_test, y_test):
                 predictions = np.array([], dtype=np.uint8)
+                scores = None
                 for i in range(0, test_len, batch_size):
                     x_batch = x_test[i : i + batch_size]
                     y_batch = y_test[i : i + batch_size]
                     pre_xo = sess.run(one_hot_x, feed_dict={pre_x:x_batch})
                     x_batch = pre_xo.reshape(x_batch.shape[0], max_len, vocab_size, 1)
                     y_batch = sess.run(one_hot_y, feed_dict={pre_y:y_batch})
-                    predictions = np.concatenate([predictions, eval_step(x_batch, y_batch)])
+                    preds, scr = eval_step(x_batch, y_batch)
+                    predictions = np.concatenate([predictions, preds])
+                    if scores is not None:
+                        scores = np.concatenate([scores, scr])
+                    else:
+                        scores = scr
                 m = metrics.Metric(y_test, predictions, classes=classes)
                 accuracies.append([epoch, m.accuracy_M, m.accuracy_m, m.accuracy])
-                return predictions
+                return predictions, scores
 
             #TRAIN
             training_time = time.time()
@@ -138,9 +143,10 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
                 x_train = x_train[shuffle_indices]
                 y_train = y_train[shuffle_indices]
                 test_times.append(time.time())
-                predictions = evaluate(epoch, test_length, test_batch_size, x_test, y_test)
+                predictions, scores = evaluate(epoch, test_length, test_batch_size, x_test, y_test)
                 test_times[-1] = time.time() - test_times[-1]
-                if accuracies[-1][1] > best_result[0]: best_result = [accuracies[-1][1], np.copy(predictions)]
+                if accuracies[-1][1] > best_result[0]:
+                    best_result = [accuracies[-1][1], np.copy(predictions), np.copy(scores)]
                 time_str = datetime.datetime.now().isoformat()
                 out += time_str+': '+str(accuracies[-1]) + '\n'
                 if options.verbose: print(time_str+': '+str(accuracies[-1]))
@@ -149,15 +155,16 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
                 print("Saving Model")
                 tf.saved_model.simple_save(
                     sess,
-                    options.model_export_dir,
+                    options.model_export_dir+'_'+str(len(accuracies)),
                     inputs={'x_input': cnn.x_input},
                     outputs={'prediction': cnn.layers['pred']}
                 )
+            
             #TEST
             test_times.append(time.time())
             predictions = evaluate(epoch, test_length, test_batch_size, x_test, y_test)
             test_times[-1] = time.time() - test_times[-1]
-    return y_test, np.array(predictions, dtype=np.uint8), accuracies, best_result, training_time, test_times, out
+    return y_test, np.array(predictions[1], dtype=np.uint8), accuracies, best_result, training_time, test_times, out
 
 train_files, test_files = get_files(options.root)
 report_out += print_files(options.root)
@@ -168,10 +175,6 @@ report_out += print_data_info(db)
 shuffled = np.random.permutation(range(db.train_size))
 db.x_train = db.x_train[shuffled]
 db.y_train = db.y_train[shuffled]
-
-shuffled = np.random.permutation(range(db.test_size))
-db.x_test = db.x_test[shuffled]
-db.y_test = db.y_test[shuffled]
 
 labels, predictions, accuracies, best_result, training_time, test_times, training_out = train_evaluate(
     db.x_train,
@@ -197,6 +200,9 @@ labels, predictions, accuracies, best_result, training_time, test_times, trainin
 )
 
 report_out += training_out
+
+model_data = {'y': db.y_test, 'scores': best_result[-1], 'classes': db.classes}
+pickle.dump(model_data, open('model_data_'+options.root.split('/')[-1]+'.p', 'wb'))
 
 m = metrics.Metric(labels, best_result[1], classes=db.classes, filename_prefix=options.prefix)
 classification_report = m.get_report()

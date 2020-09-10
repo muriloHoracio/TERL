@@ -34,7 +34,7 @@ class CNN_model(object):
 
         self.x_input = tf.placeholder(tf.float32, [None, max_len, vocab_size, 1], name="x_input")
         self.y_input = tf.placeholder(tf.float32, [None, num_classes], name="y_input")
-        self.dropout = tf.placeholder(tf.float32, name="dropout")
+        #self.dropout = tf.placeholder(tf.float32, name="dropout")
 
         self.W, self.B = self.create_learnable_params(architecture, widths, feature_maps, vocab_size, num_classes, flatten_shape)
         self.layers = self.create_layers(architecture, widths, strides, dilations, activation_functions, flatten_shape)
@@ -46,7 +46,7 @@ class CNN_model(object):
         for w in self.W:
             loss_sum += tf.nn.l2_loss(self.W[w])
 
-        losses = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.layers['scores'], labels=self.y_input)
+        losses = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.layers['outputs'], labels=self.y_input)
         self.loss = tf.reduce_mean(losses) + (l2_reg_lambda * loss_sum)
 
         #predictions
@@ -124,11 +124,11 @@ class CNN_model(object):
                 elif activation_functions[i] == 'elu':
                     layers['elu' + str(i)] = tf.nn.elu(tf.matmul(prev_layer, self.W['fc' + str(i)]) + self.B['fc' + str(i)])
                     prev_layer = layers['elu' + str(i)]
-                prev_layer = tf.nn.dropout(prev_layer,rate=self.dropout)
+                prev_layer = tf.nn.dropout(prev_layer,rate=0.5)
                 fc_counter += 1
             elif layer == 'pred':
-                layers['scores'] = tf.matmul(prev_layer, self.W['pred']) + self.B['pred']
-                layers['scores'] = tf.nn.softmax(layers['scores'])
+                layers['outputs'] = tf.nn.bias_add(tf.matmul(prev_layer, self.W['pred']),self.B['pred'],name='outputs')
+                layers['scores'] = tf.nn.softmax(layers['outputs'], name='scores')
                 layers['pred'] = tf.argmax(layers['scores'], 1, name='prediction')
         return layers
     def print_layers_shape(self):

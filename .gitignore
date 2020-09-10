@@ -2,3 +2,5 @@
 .vscode
 __pycache__
 */*/*.fa
+*.p
+*.y

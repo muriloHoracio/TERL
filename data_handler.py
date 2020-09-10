@@ -1,9 +1,10 @@
 import numpy as np
+import os
 class DataHandler:
     def __init__(self, train, test, region_size=30, pool_size=40):
         self.train = train
         self.test = test
-        self.classes = [e.split('/')[-1].split('_')[0] for e in self.test]
+        self.classes = [os.path.splitext(e.split('/')[-1].split('_')[0])[0] for e in self.test]
         self.num_classes = len(self.classes)
         self.max_len = 0
         self.vocabulary = ['A','C','G','T','N',5] # 5 is the background signal for padding
@@ -21,7 +22,7 @@ class DataHandler:
         y = []
         for fl in files:
             with open(fl,'r') as f:
-                cl = self.classes.index(fl.split('/')[-1].split('_')[0])
+                cl = self.classes.index(os.path.splitext(fl.split('/')[-1].split('_')[0])[0])
                 for l in f.readlines():
                     if l[0] == '>':
                         if x != []:
