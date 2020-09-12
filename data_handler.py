@@ -13,10 +13,9 @@ class DataHandler:
         self.x_test, self.y_test = self.get_data(self.test)
         self.train_size = len(self.y_train)
         self.test_size = len(self.y_test)
-#        while(self.max_len - region_size + 1)%pool_size != 0:
-#            self.max_len += 1
         self.x_train = np.array([np.pad(self.x_train[i],(0,self.max_len-len(self.x_train[i])),'constant',constant_values=(0,0)) for i in range(self.train_size)]) # pads with zero the sequences with length different from max_len
         self.x_test = np.array([np.pad(self.x_test[i],(0,self.max_len-len(self.x_test[i])),'constant',constant_values=(0,0)) for i in range(self.test_size)]) #pads with zero the sequences with length different from max_len
+    
     def get_data(self, files):
         x = []
         y = []
@@ -37,3 +36,13 @@ class DataHandler:
                 if len(x[-1]) > self.max_len:
                     self.max_len = len(x[-1])
         return np.array([e for e in x]), np.array([e for e in y])
+    
+    def get_info_str(self) -> str:
+        out = f'{"*" * 79}\n**{" " * 30}  DATASET INFO '\
+            f'{" " * 30}**\n{"*" * 79}\n'
+        out += f'{"Classes:":20s} {", ".join(self.classes)}\n'
+        out += f'{"Train size:":20s} {self.train_size}\n'
+        out += f'{"Test size:":20s} {self.test_size}\n'
+        out += f'{"Longest sequence:":20s} {self.max_len}\n'
+        out += f'{"Vocabulary size:":20s} {self.vocab_size}\n'
+        return out

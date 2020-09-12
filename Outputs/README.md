@@ -1,1 +1,1 @@
-# Default Output Folder
+# Folder to Store the Outputs

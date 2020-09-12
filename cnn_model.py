@@ -11,8 +11,7 @@ def calculate_flatten_shape(architecture, widths, feature_maps, max_len):
             last_shape = int(np.ceil(last_shape/widths[i]))
     return last_shape * feature_maps[-1]
 
-
-class CNN_model(object):
+class Model(object):
     def __init__(self, num_classes, classes, architecture, activation_functions, widths, strides, dilations, feature_maps, vocab_size, max_len, l2_reg_lambda=0.001):
         #initializes weights and biases
         architecture.append('pred')
@@ -34,7 +33,6 @@ class CNN_model(object):
 
         self.x_input = tf.placeholder(tf.float32, [None, max_len, vocab_size, 1], name="x_input")
         self.y_input = tf.placeholder(tf.float32, [None, num_classes], name="y_input")
-        #self.dropout = tf.placeholder(tf.float32, name="dropout")
 
         self.W, self.B = self.create_learnable_params(architecture, widths, feature_maps, vocab_size, num_classes, flatten_shape)
         self.layers = self.create_layers(architecture, widths, strides, dilations, activation_functions, flatten_shape)
@@ -98,7 +96,6 @@ class CNN_model(object):
                     layers['elu' + str(i)] = tf.nn.elu(tf.nn.bias_add(layers['conv' + str(i)], self.B['conv' + str(i)]))
                     prev_layer = layers['elu' + str(i)]
                 conv_counter += 1
-                #prev_layer = tf.nn.dropout(prev_layer,rate=self.dropout)
             elif layer == 'pool':
                 if activation_functions[i] == 'avg':
                     layers['pool' + str(i)] = tf.nn.avg_pool(prev_layer, ksize=[1, widths[i], 1, 1], strides=[1, strides[i], 1, 1], padding='SAME')
