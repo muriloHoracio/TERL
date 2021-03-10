@@ -113,7 +113,7 @@ def get_data(seq_file, max_len):
             if l[0] == '>':
                 headers.append(l)
                 if seq != '':
-                    seqs.append(np.array([nucleotide_to_int[c] for c in seq], dtype=np.uint8))
+                    seqs.append(np.array([nucleotide_to_int[c] if c in nucleotide_to_int else 5 for c in seq], dtype=np.uint8))
                     seqs_raw.append(seq_raw)
                     if len(seqs[-1]) <= max_len:
                         seqs[-1] = np.pad(seqs[-1], (0, max_len - len(seqs[-1])), 'constant', constant_values=(0, 0))
@@ -126,7 +126,7 @@ def get_data(seq_file, max_len):
             else:
                 seq += l.upper().strip()
                 seq_raw += l
-        seqs.append(np.array([nucleotide_to_int[c] for c in seq], dtype=np.uint8))
+        seqs.append(np.array([nucleotide_to_int[c] if c in nucleotide_to_int else 5 for c in seq], dtype=np.uint8))
         seqs_raw.append(seq_raw)
         if len(seqs[-1]) <= max_len:
             seqs[-1] = np.pad(seqs[-1], (0, max_len - len(seqs[-1])), 'constant', constant_values=(0, 0))
