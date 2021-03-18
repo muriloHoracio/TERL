@@ -32,9 +32,9 @@ class CNN_model(object):
         tf.constant(max_len, name='max_len')
         tf.constant(l2_reg_lambda, name='l2')
 
-        self.x_input = tf.placeholder(tf.float32, [None, max_len, vocab_size, 1], name="x_input")
-        self.y_input = tf.placeholder(tf.float32, [None, num_classes], name="y_input")
-        #self.dropout = tf.placeholder(tf.float32, name="dropout")
+        self.x_input = tf.compat.v1.placeholder(tf.float32, [None, max_len, vocab_size, 1], name="x_input")
+        self.y_input = tf.compat.v1.placeholder(tf.float32, [None, num_classes], name="y_input")
+        #self.dropout = tf.compat.v1.placeholder(tf.float32, name="dropout")
 
         self.W, self.B = self.create_learnable_params(architecture, widths, feature_maps, vocab_size, num_classes, flatten_shape)
         self.layers = self.create_layers(architecture, widths, strides, dilations, activation_functions, flatten_shape)
@@ -62,17 +62,17 @@ class CNN_model(object):
             if layer == 'conv':
                 height = vocab_size if conv_counter == 0 else 1
                 prev_layer_dim = 1 if conv_counter == 0 else feature_maps[conv_counter - 1]
-                W['conv' + str(i)] = tf.Variable(tf.truncated_normal([widths[i], height, prev_layer_dim, feature_maps[conv_counter]], stddev=0.1, dtype=tf.float32))
-                B['conv' + str(i)] = tf.Variable(tf.truncated_normal([feature_maps[conv_counter]], stddev=0.1, dtype=tf.float32))
+                W['conv' + str(i)] = tf.Variable(tf.random.truncated_normal([widths[i], height, prev_layer_dim, feature_maps[conv_counter]], stddev=0.1, dtype=tf.float32))
+                B['conv' + str(i)] = tf.Variable(tf.random.truncated_normal([feature_maps[conv_counter]], stddev=0.1, dtype=tf.float32))
                 conv_counter += 1
             elif layer == 'fc':
                 height = flatten_shape if fc_counter == 0 else widths[i - 1]
-                W['fc' + str(i)] = tf.Variable(tf.truncated_normal([height, widths[i]], stddev=0.1))
-                B['fc' + str(i)] = tf.Variable(tf.truncated_normal([widths[i]], stddev=0.1))
+                W['fc' + str(i)] = tf.Variable(tf.random.truncated_normal([height, widths[i]], stddev=0.1))
+                B['fc' + str(i)] = tf.Variable(tf.random.truncated_normal([widths[i]], stddev=0.1))
                 fc_counter += 1
             elif layer == 'pred':
-                W['pred'] = tf.Variable(tf.truncated_normal([widths[i - 1], num_classes], stddev=0.1))
-                B['pred'] = tf.Variable(tf.truncated_normal([num_classes], stddev=0.1))
+                W['pred'] = tf.Variable(tf.random.truncated_normal([widths[i - 1], num_classes], stddev=0.1))
+                B['pred'] = tf.Variable(tf.random.truncated_normal([num_classes], stddev=0.1))
         return W, B
     def create_layers(self, architectures, widths, strides, dilations, activation_functions, flatten_shape):
         layers = dict()
@@ -101,7 +101,7 @@ class CNN_model(object):
                 #prev_layer = tf.nn.dropout(prev_layer,rate=self.dropout)
             elif layer == 'pool':
                 if activation_functions[i] == 'avg':
-                    layers['pool' + str(i)] = tf.nn.avg_pool(prev_layer, ksize=[1, widths[i], 1, 1], strides=[1, strides[i], 1, 1], padding='SAME')
+                    layers['pool' + str(i)] = tf.nn.avg_pool2d(prev_layer, ksize=[1, widths[i], 1, 1], strides=[1, strides[i], 1, 1], padding='SAME')
                 elif activation_functions[i] == 'max':
                     layers['pool' + str(i)] = tf.nn.max_pool(prev_layer, ksize=[1, widths[i], 1, 1], strides=[1, strides[i], 1, 1], padding='SAME')
                 prev_layer = layers['pool' + str(i)]
