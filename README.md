@@ -4,16 +4,17 @@ We ask you to cite the main publication related to this software whenever you us
 
 You may use the following .bibtex to cite the main publication of this software:
 ```
-@article {da Cruz2020.03.25.000935,
-	author = {da Cruz, Murilo Horacio Pereira and Domingues, Douglas Silva and Saito, Priscila Tiemi Maeda and Paschoal, Alexandre Rossi and Bugatti, Pedro Henrique},
-	title = {TERL: Classification of Transposable Elements by Convolutional Neural Networks},
-	elocation-id = {2020.03.25.000935},
-	year = {2020},
-	doi = {10.1101/2020.03.25.000935},
-	publisher = {Cold Spring Harbor Laboratory},
-	URL = {https://www.biorxiv.org/content/early/2020/03/26/2020.03.25.000935},
-	eprint = {https://www.biorxiv.org/content/early/2020/03/26/2020.03.25.000935.full.pdf},
-	journal = {bioRxiv}
+@article{10.1093/bib/bbaa185,
+    author = {da Cruz, Murilo Horacio Pereira and Domingues, Douglas Silva and Saito, Priscila Tiemi Maeda and Paschoal, Alexandre Rossi and Bugatti, Pedro Henrique},
+    title = "{TERL: classification of transposable elements by convolutional neural networks}",
+    journal = {Briefings in Bioinformatics},
+    year = {2020},
+    month = {09},
+    issn = {1477-4054},
+    doi = {10.1093/bib/bbaa185},
+    url = {https://doi.org/10.1093/bib/bbaa185},
+    note = {bbaa185},
+    eprint = {https://academic.oup.com/bib/advance-article-pdf/doi/10.1093/bib/bbaa185/33724804/bbaa185.pdf},
 }
 ```
 
