@@ -5,12 +5,11 @@ from train_parser import print_options
 options = get_options(sys.argv[1:])
 report_out = print_options(options)
 
-import warnings
-#warnings.filterwarnings('ignore')
-
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 import numpy as np
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 from cnn_model import CNN_model
 import data_handler as dh
 import metrics
@@ -18,8 +17,6 @@ import time
 import datetime
 import pickle
 
-#tf.logging.set_verbosity(tf.logging.ERROR)
-#tf.disable_v2_behavior()
 
 def get_files(root):
     train_files = [root+'/Train/'+train_file for train_file in os.listdir(root+'/Train')]
@@ -28,17 +25,17 @@ def get_files(root):
 
 def get_optimizer(optimizer_option, learning_rate):
     if optimizer_option == 'ADAM':
-        return tf.train.AdamOptimizer(learning_rate=learning_rate)
+        return tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate)
     elif optimizer_option == 'ADADELTA':
-        return tf.train.AdadeltaOptimizer(learning_rate=learning_rate)
+        return tf.compat.v1.train.AdadeltaOptimizer(learning_rate=learning_rate)
     elif optimizer_option == 'ADAGRAD':
-        return tf.train.AdagradOptimizer(learning_rate=learning_rate)
+        return tf.compat.v1.train.AdagradOptimizer(learning_rate=learning_rate)
     elif optimizer_option == 'FTRL':
-        return tf.train.FtrlOptimizer(learning_rate=learning_rate)
+        return tf.compat.v1.train.FtrlOptimizer(learning_rate=learning_rate)
     elif optimizer_option == 'RMSPROP':
-        return tf.train.RMSPropOptimizer(learning_rate=learning_rate)
+        return tf.compat.v1.train.RMSPropOptimizer(learning_rate=learning_rate)
     elif optimizer_option == 'GRAD_DESC':
-        return tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+        return tf.compat.v1.train.GradientDescentOptimizer(learning_rate=learning_rate)
 
 def print_files(root):
     out = '*' * 79 + '\n**' + ' ' * 34 + ' FILES ' + ' ' * 34 + '**\n' + '*' * 79 + '\n'
@@ -61,9 +58,9 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
     out = ''
     train_length = len(y_train)
     test_length = len(y_test)
-    with tf.Graph().as_default():
-        session_conf = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
-        sess = tf.Session(config=session_conf)
+    with tf.compat.v1.Graph().as_default():
+        session_conf = tf.compat.v1.ConfigProto(allow_soft_placement=True, log_device_placement=False)
+        sess = tf.compat.v1.Session(config=session_conf)
         with sess.as_default():
             cnn = CNN_model(
                 num_classes,
@@ -79,20 +76,23 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
                 l2
             )
 
-            global_step = tf.Variable(0, name="global_step", trainable=False)
+            global_step = tf.compat.v1.Variable(0, name="global_step", trainable=False)
             grads_and_vars = optimizer.compute_gradients(cnn.loss)
             train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
 
-            pre_x = tf.placeholder(tf.uint8,[None, max_len], name='pre_x')
-            pre_y = tf.placeholder(tf.uint8,[None], name='pre_y')
-            one_hot_x = tf.one_hot(pre_x, vocab_size, dtype=tf.float32, name='one_hot_x')
-            one_hot_y = tf.one_hot(pre_y, num_classes, dtype=tf.float32, name='one_hot_y')
+            pre_x = tf.compat.v1.placeholder(tf.uint8,[None, max_len], name='pre_x')
+            pre_y = tf.compat.v1.placeholder(tf.uint8,[None], name='pre_y')
+            one_hot_x = tf.compat.v1.one_hot(pre_x, vocab_size, dtype=tf.float32, name='one_hot_x')
+            one_hot_y = tf.compat.v1.one_hot(pre_y, num_classes, dtype=tf.float32, name='one_hot_y')
 
             accuracies = []
             training_time = 0
             test_times = []
             best_result = [0, [], []]
-            sess.run([tf.global_variables_initializer(),tf.local_variables_initializer()])
+            sess.run([
+                tf.compat.v1.global_variables_initializer(),
+                tf.compat.v1.local_variables_initializer()
+            ])
 
             def train_step(x_batch, y_batch):
                 feed_dict = {
@@ -138,7 +138,7 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
                     x_batch = pre_xo.reshape(x_batch.shape[0], max_len, vocab_size, 1)
                     y_batch = sess.run(one_hot_y, feed_dict={pre_y:y_batch})
                     train_step(x_batch, y_batch)
-                    current_step = tf.train.global_step(sess, global_step)
+                    current_step = tf.compat.v1.train.global_step(sess, global_step)
                 shuffle_indices = np.random.permutation(range(train_length))
                 x_train = x_train[shuffle_indices]
                 y_train = y_train[shuffle_indices]
@@ -153,7 +153,7 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
             training_time = time.time() - training_time
             if options.save_model:
                 print("Saving Model")
-                tf.saved_model.simple_save(
+                tf.compat.v1.saved_model.simple_save(
                     sess,
                     options.model_export_dir+'_'+str(len(accuracies)),
                     inputs={'x_input': cnn.x_input},

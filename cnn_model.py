@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import tensorflow as tf
+from typing import List
 from tensorflow.contrib import learn
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 
@@ -13,11 +14,23 @@ def calculate_flatten_shape(architecture, widths, feature_maps, max_len):
 
 
 class CNN_model(object):
-    def __init__(self, num_classes, classes, architecture, activation_functions, widths, strides, dilations, feature_maps, vocab_size, max_len, l2_reg_lambda=0.001):
+    def __init__(self,
+                num_classes: int,
+                classes: List[str],
+                architecture: List[str],
+                activation_functions: List[str],
+                widths: List[int],
+                strides: List[int],
+                dilations: List[int],
+                feature_maps: List[int],
+                vocab_size: int,
+                max_len: int,
+                l2_reg_lambda: float = 0.001):
         #initializes weights and biases
         architecture.append('pred')
         activation_functions.append('pred')
-        flatten_shape = calculate_flatten_shape(architecture, widths, feature_maps, max_len)
+        flatten_shape = calculate_flatten_shape(architecture, widths,
+            feature_maps, max_len)
 
         #instatiate constants
         tf.constant(num_classes, name='num_classes')
@@ -32,12 +45,19 @@ class CNN_model(object):
         tf.constant(max_len, name='max_len')
         tf.constant(l2_reg_lambda, name='l2')
 
-        self.x_input = tf.compat.v1.placeholder(tf.float32, [None, max_len, vocab_size, 1], name="x_input")
-        self.y_input = tf.compat.v1.placeholder(tf.float32, [None, num_classes], name="y_input")
+        self.x_input = tf.compat.v1.placeholder(tf.float32,
+            [None, max_len, vocab_size, 1],
+            name="x_input")
+
+        self.y_input = tf.compat.v1.placeholder(tf.float32,
+            [None, num_classes],
+            name="y_input")
         #self.dropout = tf.compat.v1.placeholder(tf.float32, name="dropout")
 
-        self.W, self.B = self.create_learnable_params(architecture, widths, feature_maps, vocab_size, num_classes, flatten_shape)
-        self.layers = self.create_layers(architecture, widths, strides, dilations, activation_functions, flatten_shape)
+        self.W, self.B = self.create_learnable_params(architecture,
+            widths, feature_maps, vocab_size, num_classes, flatten_shape)
+        self.layers = self.create_layers(architecture, widths, strides,
+            dilations, activation_functions, flatten_shape)
 
         #losses
         loss_sum = 0
@@ -46,18 +66,31 @@ class CNN_model(object):
         for w in self.W:
             loss_sum += tf.nn.l2_loss(self.W[w])
 
-        losses = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.layers['outputs'], labels=self.y_input)
+        losses = tf.nn.softmax_cross_entropy_with_logits_v2(
+            logits=self.layers['outputs'],
+            labels=self.y_input)
+
         self.loss = tf.reduce_mean(losses) + (l2_reg_lambda * loss_sum)
 
         #predictions
         self.labels = tf.argmax(self.y_input, 1)
         self.correct_predictions = tf.equal(self.layers['pred'], self.labels)
-        self.accuracy = tf.reduce_mean(tf.cast(self.correct_predictions, "float"), name="accuracy")
-    def create_learnable_params(self, architecture, widths, feature_maps, vocab_size, num_classes, flatten_shape):
+        self.accuracy = tf.reduce_mean(
+            tf.cast(self.correct_predictions, "float"),
+            name="accuracy")
+
+    def create_learnable_params(self,
+                                architecture: List[str],
+                                widths: List[int],
+                                feature_maps: List[int],
+                                vocab_size: int,
+                                num_classes: int,
+                                flatten_shape: int):
         W = dict()
         B = dict()
         conv_counter = 0
         fc_counter = 0
+        
         for i, layer in enumerate(architecture):
             if layer == 'conv':
                 height = vocab_size if conv_counter == 0 else 1

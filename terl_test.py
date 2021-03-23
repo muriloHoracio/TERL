@@ -4,18 +4,17 @@ start = time()
 from test_parser import get_options, print_options
 import sys
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 options = get_options(sys.argv[1:])
 if options.verbose: print_options(options)
-
-import warnings
-warnings.filterwarnings('ignore')
 
 import numpy as np
 import tensorflow as tf
 if options.verbose: print('LOAD LIB TIME: ', time() - start)
 
-tf.logging.set_verbosity(tf.logging.ERROR)
+
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 tf.disable_v2_behavior()
 
 LONGER_SEQ_WARNING = '\nWARNING:\n\nFile {fl} has a sequence with length longer ({longer}) then the max_len ({max_len}) permited by the model'
