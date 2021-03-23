@@ -72,13 +72,14 @@ classification = {
     'LINE': ['Class I\tLINE',0],
     'SINE': ['Class I\tSINE',0],
     'TIR': ['Class II\tSubclass 1\tTIR',0],
-    'Crypton': ['Class II\tSubclass 1\tCrypton',0],
-    'Helitron': ['Class II\tSubclass 2\tHelitron',0],
-    'Maverick': ['Class II\tSubclass 2\tMaverick',0],
     'Subclass 1': ['Class II\tSubclass 1',0],
     'Subclass 2': ['Class II\tSubclass 2',0],
     'Class I': ['Class I',0],
     'Class II': ['Class II',0],
+    'TRIM': ['TRIM',0],
+    'LARD': ['LARD',0],
+    'MITE': ['MITE',0],
+    'SNAC': ['SNAC',0],
     'Random': ['NonTE',0],
 }
 
@@ -176,6 +177,9 @@ with tf.Session(graph=tf.Graph()) as sess:
         out = ''
         x = list(x)
         for i, pred in enumerate(predictions):
+            if classes[pred] not in classification:
+                classification[classes[pred]] = [classes[pred], 0]
+                
             classification[classes[pred]][1] += 1
             out += '>' + classification[classes[pred]][0] + '\t' + str(classification[classes[pred]][1]) + '\n'
             out += seqs[i]
