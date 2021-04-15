@@ -1,4 +1,4 @@
-numpy==1.18.1
+numpy
 tensorflow-gpu==2.4.0
 matplotlib==3.1.2
 scikit-learn==0.21.3
