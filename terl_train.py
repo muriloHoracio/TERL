@@ -1,6 +1,5 @@
 import sys
-from train_parser import get_options
-from train_parser import print_options
+from train_parser import get_options, print_options
 
 options = get_options(sys.argv[1:])
 report_out = print_options(options)
