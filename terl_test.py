@@ -15,7 +15,7 @@ if options.verbose: print('LOAD LIB TIME: ', time() - start)
 
 
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
-tf.disable_v2_behavior()
+tf.compat.v1.disable_v2_behavior()
 
 LONGER_SEQ_WARNING = '\nWARNING:\n\nFile {fl} has a sequence with length longer ({longer}) then the max_len ({max_len}) permited by the model'
 
@@ -136,9 +136,9 @@ def get_data(seq_file, max_len):
     if options.verbose: print('LOAD DATA TIME: ', time() - start)
     return np.array(seqs), seqs_raw
 
-with tf.Session(graph=tf.Graph()) as sess:
+with tf.compat.v1.Session(graph=tf.Graph()) as sess:
     start = time()
-    tf.saved_model.loader.load(
+    tf.compat.v1.saved_model.loader.load(
         sess,
         ['serve'],
         options.model

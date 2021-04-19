@@ -2,7 +2,6 @@ import os
 import numpy as np
 import tensorflow as tf
 from typing import List
-from tensorflow.contrib import learn
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 
 def calculate_flatten_shape(architecture, widths, feature_maps, max_len):
@@ -66,7 +65,7 @@ class CNN_model(object):
         for w in self.W:
             loss_sum += tf.nn.l2_loss(self.W[w])
 
-        losses = tf.nn.softmax_cross_entropy_with_logits_v2(
+        losses = tf.nn.softmax_cross_entropy_with_logits(
             logits=self.layers['outputs'],
             labels=self.y_input)
 
