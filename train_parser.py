@@ -21,6 +21,20 @@ def get_options(arguments):
     )
 
     parser.add_argument(
+        '-it', '--input-type',
+        dest = 'input_type',
+        type = str,
+        nargs = 1,
+        default = ['genomic'],
+        choices = ['genomic', 'information-matrix'],
+        required = False,
+        help = """Input type. Defines which preprocessing steps
+               will be used to prepare data for network input
+               layer. Must be either "genomic" or "information-
+               matrix". "genomic" is the default value"""
+    )
+
+    parser.add_argument(
         '-l', '--layers',
         dest = 'number_of_layers',
         type = int,
@@ -291,6 +305,7 @@ def get_options(arguments):
     options.root = options.root[0]
     if options.root[-1] == '/':
         options.root = options.root[0:-1]
+    options.input_type = options.input_type[0]
     options.number_of_layers = options.number_of_layers[0]
     options.train_batch_size = options.train_batch_size[0]
     options.test_batch_size = options.test_batch_size[0]
@@ -354,19 +369,20 @@ def print_options(options):
             dilations_string += '%-8s' % '-'
 
     out = '*' * 79 + '\n**' + ' ' * 33 + ' OPTIONS ' + ' ' * 33 + '**\n' + '*' * 79 + '\n'
-    out += '%20s %s\n' % ('Root:',options.root)
-    out += '%20s %d\n' % ('Train batch:',options.train_batch_size)
-    out += '%20s %d\n' % ('Test batch:',options.test_batch_size)
-    out += '%20s %d\n' % ('Epochs:',options.epochs)
-    out += '%20s %.2f\n' % ('Dropout:',options.dropout)
-    out += '%20s %d\n' % ('Number of layers:',options.number_of_layers)
-    out += '%20s %s\n' % ('Optimizer:',options.optimizer)
-    out += '%20s %f\n' % ('Learning rate:',options.learning_rate)
-    out += '%20s %f\n' % ('L2 regulation:',options.l2)
+    out += '%20s %s\n' % ('Root:', options.root)
+    out += '%20s %s\n' % ('Input type:', options.input_type)
+    out += '%20s %d\n' % ('Train batch:', options.train_batch_size)
+    out += '%20s %d\n' % ('Test batch:', options.test_batch_size)
+    out += '%20s %d\n' % ('Epochs:', options.epochs)
+    out += '%20s %.2f\n' % ('Dropout:', options.dropout)
+    out += '%20s %d\n' % ('Number of layers:', options.number_of_layers)
+    out += '%20s %s\n' % ('Optimizer:', options.optimizer)
+    out += '%20s %f\n' % ('Learning rate:', options.learning_rate)
+    out += '%20s %f\n' % ('L2 regulation:', options.l2)
 
     if options.save_graph:
         out += '%20s\n' % ('Saving graph:')
-        out += '%20s %s\n' % ('Graph Title:',options.graph_title)
+        out += '%20s %s\n' % ('Graph Title:', options.graph_title)
     else:
         out += '%20s\n' % ('Not saving graph:')
 
@@ -377,17 +393,21 @@ def print_options(options):
 
     if options.save_model:
         out += '%20s\n' % ('Saving model:')
-        out += '%20s %s\n' % ('Model export dir:',options.model_export_dir)
+        out += '%20s %s\n' % ('Model export dir:', options.model_export_dir)
     else:
         out += '%20s\n' % ('Not saving model:')
 
     if options.save_graph or options.save_report:
         out += '%20s %s\n' % ('Prefix:',options.prefix)
 
-    out += '%20s %s\n' % ('Architecture:',''.join('%-8s' % t for t in options.architecture))
-    out += '%20s %s\n' % ('Functions:',''.join('%-8s' % t for t in options.activation_functions))
-    out += '%20s %s\n' % ('Widths:',''.join('%-8s' % t for t in options.widths))
-    out += '%20s %s\n' % ('Strides:',''.join('%-8s' % t for t in options.strides))
+    out += '%20s %s\n' % ('Architecture:', ''
+        .join('%-8s' % t for t in options.architecture))
+    out += '%20s %s\n' % ('Functions:', ''
+        .join('%-8s' % t for t in options.activation_functions))
+    out += '%20s %s\n' % ('Widths:', ''
+        .join('%-8s' % t for t in options.widths))
+    out += '%20s %s\n' % ('Strides:', ''
+        .join('%-8s' % t for t in options.strides))
     out += feature_maps_string + '\n'
     out += dilations_string + '\n'
     if options.verbose: print(out)

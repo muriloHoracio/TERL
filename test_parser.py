@@ -17,6 +17,20 @@ def get_options(arguments):
     )
 
     parser.add_argument(
+        '-it', '--input-type',
+        dest = 'input_type',
+        type = str,
+        nargs = 1,
+        default = ['genomic'],
+        choices = ['genomic', 'information-matrix'],
+        required = False,
+        help = """Input type. Defines which preprocessing steps
+               will be used to prepare data for network input
+               layer. Must be either "genomic" or "information-
+               matrix". "genomic" is the default value"""
+    )
+
+    parser.add_argument(
         '-f', '--files',
         dest = 'files',
         nargs='+',
@@ -58,6 +72,7 @@ def get_options(arguments):
     options =  parser.parse_args(arguments)
 
     options.model = options.model
+    options.input_type = options.input_type[0]
     options.batch = options.batch[0]
     options.prefix = options.prefix[0]
 
@@ -75,11 +90,12 @@ def get_options(arguments):
 
 def print_options(options):
     out = '*' * 79 + '\n**' + ' ' * 33 + ' OPTIONS ' + ' ' * 33 + '**\n' + '*' * 79 + '\n'
-    out += '%20s %s\n' % ('Model:',options.model)
-    out += '%20s\n' % ('Files:',)
+    out += '%20s %s\n' % ('Model:', options.model)
+    out += '%20s %s\n' % ('Input type:', options.input_type)
+    out += '%20s\n' % ('Files:')
     for f in options.files:
         out += '%20s %s\n' % ('',f)
-    out += '%20s %d\n' % ('Batch:',options.batch)
-    out += '%20s %s\n' % ('Prefix:',options.prefix)
-    out += '%20s %s\n' % ('Verbose:',options.verbose)
+    out += '%20s %d\n' % ('Batch:', options.batch)
+    out += '%20s %s\n' % ('Prefix:', options.prefix)
+    out += '%20s %s\n' % ('Verbose:', options.verbose)
     print(out)
