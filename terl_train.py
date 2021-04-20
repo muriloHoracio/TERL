@@ -168,7 +168,7 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
 train_files, test_files = get_files(options.root)
 report_out += print_files(options.root)
 
-db = dh.DataHandler(train_files, test_files)
+db = dh.DataHandler(train_files, test_files, options.input_type)
 report_out += print_data_info(db)
 
 shuffled = np.random.permutation(range(db.train_size))
