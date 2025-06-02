@@ -73,7 +73,8 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
                 feature_maps,
                 vocab_size,
                 max_len,
-                l2
+                l2,
+                dropout
             )
 
             global_step = tf.compat.v1.Variable(0, name="global_step", trainable=False)
@@ -97,14 +98,16 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
             def train_step(x_batch, y_batch):
                 feed_dict = {
                     cnn.x_input: x_batch,
-                    cnn.y_input: y_batch
+                    cnn.y_input: y_batch,
+                    cnn.is_training: True
                 }
                 _, step = sess.run([train_op, global_step], feed_dict)
 
             def eval_step(x_batch, y_batch):
                 feed_dict = {
                     cnn.x_input: x_batch,
-                    cnn.y_input: y_batch
+                    cnn.y_input: y_batch,
+                    cnn.is_training: False
                 }
                 predictions, scores = sess.run([cnn.layers['pred'], cnn.layers['scores']], feed_dict)
                 return predictions, scores
@@ -131,6 +134,7 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
             #TRAIN
             training_time = time.time()
             for epoch in range(epochs):
+                print(f'Epoch: {epoch + 1} / {epochs}')
                 for batch in range(0, train_length, train_batch_size):
                     x_batch = x_train[batch : batch + train_batch_size]
                     y_batch = y_train[batch : batch + train_batch_size]
@@ -156,7 +160,10 @@ def train_evaluate(x_train, y_train, x_test, y_test, vocab_size, max_len, classe
                 tf.compat.v1.saved_model.simple_save(
                     sess,
                     options.model_export_dir+'_'+str(len(accuracies)),
-                    inputs={'x_input': cnn.x_input},
+                    inputs={
+                        'x_input': cnn.x_input,
+                        'is_training': cnn.is_training
+                    },
                     outputs={'prediction': cnn.layers['pred']}
                 )
             

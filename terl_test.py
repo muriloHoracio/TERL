@@ -2,6 +2,7 @@
 from time import time
 start = time()
 from test_parser import get_options, print_options
+import random
 import sys
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -18,6 +19,12 @@ tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 tf.compat.v1.disable_v2_behavior()
 
 LONGER_SEQ_WARNING = '\nWARNING:\n\nFile {fl} has a sequence with length longer ({longer}) then the max_len ({max_len}) permited by the model'
+
+seed = 42
+os.environ['PYTHONHASHSEED'] = str(seed)
+random.seed(seed)
+np.random.seed(seed)
+tf.compat.v1.set_random_seed(seed)
 
 int_to_nucleotide = {
     1: 'A',
@@ -169,7 +176,16 @@ with tf.compat.v1.Session(graph=tf.Graph()) as sess:
             pre_xo = sess.run('one_hot_x:0', feed_dict={'pre_x:0': x_batch})
             x_batch = pre_xo.reshape(x_batch.shape[0], max_len, vocab_size, 1)
 
-            predictions = np.concatenate([predictions, sess.run('prediction:0', feed_dict={'x_input:0': x_batch})])
+            predictions = np.concatenate([
+                predictions,
+                sess.run(
+                    'prediction:0',
+                    feed_dict={
+                        'x_input:0': x_batch,
+                        'is_training:0': False
+                    }
+                )
+            ])
         if options.verbose: print('CLASSIFICATION TIME: ', time() - start)
 
         # ******* WRITE RESULTS *******

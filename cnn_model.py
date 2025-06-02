@@ -14,17 +14,18 @@ def calculate_flatten_shape(architecture, widths, feature_maps, max_len):
 
 class CNN_model(object):
     def __init__(self,
-                num_classes: int,
-                classes: List[str],
-                architecture: List[str],
-                activation_functions: List[str],
-                widths: List[int],
-                strides: List[int],
-                dilations: List[int],
-                feature_maps: List[int],
-                vocab_size: int,
-                max_len: int,
-                l2_reg_lambda: float = 0.001):
+                 num_classes: int,
+                 classes: List[str],
+                 architecture: List[str],
+                 activation_functions: List[str],
+                 widths: List[int],
+                 strides: List[int],
+                 dilations: List[int],
+                 feature_maps: List[int],
+                 vocab_size: int,
+                 max_len: int,
+                 l2_reg_lambda: float = 0.001,
+                 dropout_rate: float = 0.5):
         #initializes weights and biases
         architecture.append('pred')
         activation_functions.append('pred')
@@ -43,6 +44,15 @@ class CNN_model(object):
         tf.constant(vocab_size, name='vocab_size')
         tf.constant(max_len, name='max_len')
         tf.constant(l2_reg_lambda, name='l2')
+
+        self.is_training = tf.compat.v1.placeholder(tf.bool,
+                                                    name='is_training')
+
+        self.dropout_rate = tf.compat.v1.placeholder_with_default(
+            dropout_rate,
+            shape=(),
+            name='dropout_rate'
+        )
 
         self.x_input = tf.compat.v1.placeholder(tf.float32,
             [None, max_len, vocab_size, 1],
@@ -156,7 +166,11 @@ class CNN_model(object):
                 elif activation_functions[i] == 'elu':
                     layers['elu' + str(i)] = tf.nn.elu(tf.matmul(prev_layer, self.W['fc' + str(i)]) + self.B['fc' + str(i)])
                     prev_layer = layers['elu' + str(i)]
-                prev_layer = tf.nn.dropout(prev_layer,rate=0.5)
+                prev_layer = tf.cond(
+                    self.is_training,
+                    lambda: tf.nn.dropout(prev_layer, rate=self.dropout_rate),
+                    lambda: prev_layer
+                )
                 fc_counter += 1
             elif layer == 'pred':
                 layers['outputs'] = tf.nn.bias_add(tf.matmul(prev_layer, self.W['pred']),self.B['pred'],name='outputs')
